@@ -109,11 +109,11 @@
 		<axis xyz="0 0 1"/>
 	</joint>
 	
-	<joint name="base_to_link1" type="fixed">
+	<joint name="base_to_link1" type="prismatic">
 		<parent link="base_link"/>
 		<child link="link1"/>
 		<origin xyz="0 0 ${base_h}"/>
-		<axis xyz="0 1 0"/>
+		<limit effort="1" lower="0.0" upper="0.0" velocity="1"/>
 	</joint>
 
 	<joint name="link1_to_link2" type="continuous">

@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   control_toolbox
   controller_manager
   std_msgs
+  poly_detector
 )
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)

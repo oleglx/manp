@@ -25,7 +25,7 @@
   	<!-- Load the controllers -->
 
   	<node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
-		output="screen" ns="/manp" args="world_to_base_state_contoller link1_to_link2_state_controller link2_to_link3_state_controller joint_state_controller"/>
+		output="screen" ns="/manp" args="world_to_base_state_controller link1_to_link2_state_controller link2_to_link3_state_controller joint_state_controller"/>
 
   	<!-- convert joint states to TF transforms for rviz, etc -->
 
