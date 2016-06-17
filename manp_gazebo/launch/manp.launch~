@@ -1,9 +1,0 @@
-<launch>
-  	<include file="$(find gazebo_ros)/launch/empty_world.launch">
-    		<arg name="world_name" value="$(find manp_gazebo)/worlds/manp.world"/>
-      	</include>
-
-	<param name="robot_description" command="$(find xacro)/xacro '$(find ldtester_description)/urdf/ldtester.xacro'" />
-	
-	<node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -z 1 -model manp" />
-</launch>
