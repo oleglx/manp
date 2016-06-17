@@ -9,7 +9,7 @@
 	<xacro:property name="base_h" value="0.5"/>
 	<xacro:property name="base_r" value="1"/>
 	<xacro:property name="base_link_mass" value="1"/>
-	<xacro:property name="link_mass" value="0.01"/>
+	<xacro:property name="link_mass" value="1"/>
 
 <!-- Links -->
 
@@ -23,6 +23,7 @@
 			<origin xyz="0 0 ${base_h/2}"/>
 		</visual>
 		<inertial>
+			<origin xyz="0 0 ${base_h/2}"/>
       			<mass value="${base_link_mass}"/>
       			<inertia 
 				ixx="${base_link_mass*(3*base_r*base_r+base_h*base_h)/12}" ixy="0.0" ixz="0.0" 
@@ -45,6 +46,7 @@
 			<origin xyz="0 0 ${height/4}"/>
 		</visual>
 		<inertial>
+			<origin xyz="0 0 ${height/4}"/>
       			<mass value="${link_mass/2}"/>
       			<inertia ixx="${link_mass*height*height/6}" ixy="0.0" ixz="0.0" iyy="${link_mass*height*height/6}" iyz="0.0" izz="1e-10"/>
     		</inertial>
@@ -64,6 +66,7 @@
 			<origin xyz="0 0 ${height/2}"/>
 		</visual>
 		<inertial>
+			<origin xyz="0 0 ${height/2}"/>
       			<mass value="${link_mass}"/>
       			<inertia ixx="${link_mass*height*height/3}" ixy="0.0" ixz="0.0" iyy="${link_mass*height*height/3}" iyz="0.0" izz="1e-10"/>
     		</inertial>
@@ -83,6 +86,7 @@
 			<origin xyz="0 0 ${height/2}"/>
 		</visual>
 		<inertial>
+			<origin xyz="0 0 ${height/2}"/>
       			<mass value="${link_mass}"/>
       			<inertia ixx="${link_mass*height*height/3}" ixy="0.0" ixz="0.0" iyy="${link_mass*height*height/3}" iyz="0.0" izz="1e-10"/>
     		</inertial>
@@ -115,7 +119,7 @@
 	<joint name="link1_to_link2" type="continuous">
 		<parent link="link1"/>
 		<child link="link2"/>
-		<origin xyz="0 ${-width} ${height/2-0.5}"/>
+		<origin xyz="0 ${-width} ${height/2-0.5}" rpy="0 0 0"/>
 		<axis xyz="0 1 0"/>
 	</joint>
 	
@@ -128,4 +132,51 @@
 
 <!-- ###### -->
 
+<!-- Transmissions -->
+
+	<transmission name="world_to_base">
+		<type>transmission_interface/SimpleTransmission</type>
+    		<joint name="world_to_base">
+      			<hardwareInterface>EffortJointInterface</hardwareInterface>
+    		</joint>
+    		<actuator name="z-motor">
+      			<mechanicalReduction>1</mechanicalReduction>
+      			<hardwareInterface>EffortJointInterface</hardwareInterface>
+    		</actuator>
+  	</transmission>
+
+	<transmission name="base_to_link1">
+		<type>transmission_interface/SimpleTransmission</type>
+    		<joint name="base_to_link1">
+      			<hardwareInterface>EffortJointInterface</hardwareInterface>
+    		</joint>
+    		<actuator name="y-motor1">
+      			<mechanicalReduction>1</mechanicalReduction>
+      			<hardwareInterface>EffortJointInterface</hardwareInterface>
+    		</actuator>
+  	</transmission>
+
+	<transmission name="link1_to_link2">
+		<type>transmission_interface/SimpleTransmission</type>
+    		<joint name="link1_to_link2">
+      			<hardwareInterface>EffortJointInterface</hardwareInterface>
+    		</joint>
+    		<actuator name="y-motor2">
+      			<mechanicalReduction>1</mechanicalReduction>
+      			<hardwareInterface>EffortJointInterface</hardwareInterface>
+    		</actuator>
+  	</transmission>
+	
+	<transmission name="link2_to_link3">
+		<type>transmission_interface/SimpleTransmission</type>
+    		<joint name="link2_to_link3">
+      			<hardwareInterface>EffortJointInterface</hardwareInterface>
+    		</joint>
+    		<actuator name="y-motor3">
+      			<mechanicalReduction>1</mechanicalReduction>
+      			<hardwareInterface>EffortJointInterface</hardwareInterface>
+    		</actuator>
+  	</transmission>
+
+<!-- ############# -->
 </robot>
