@@ -145,17 +145,6 @@
     		</actuator>
   	</transmission>
 
-	<transmission name="base_to_link1">
-		<type>transmission_interface/SimpleTransmission</type>
-    		<joint name="base_to_link1">
-      			<hardwareInterface>EffortJointInterface</hardwareInterface>
-    		</joint>
-    		<actuator name="y-motor1">
-      			<mechanicalReduction>1</mechanicalReduction>
-      			<hardwareInterface>EffortJointInterface</hardwareInterface>
-    		</actuator>
-  	</transmission>
-
 	<transmission name="link1_to_link2">
 		<type>transmission_interface/SimpleTransmission</type>
     		<joint name="link1_to_link2">

@@ -16,7 +16,7 @@
 
 	<!-- Launching node, forming controll from input -->
 
-	<!-- <node name="manp_controller" pkg="manp_control" type="manp_controller" /> -->
+	<node name="manp_controller" pkg="manp_control" type="manp_controller" />
  
     	<!-- Load joint controller configurations from YAML file to parameter server -->
 
