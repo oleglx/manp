@@ -9,7 +9,7 @@
 	<xacro:property name="base_h" value="0.5"/>
 	<xacro:property name="base_r" value="1"/>
 	<xacro:property name="base_link_mass" value="1"/>
-	<xacro:property name="link_mass" value="0.01"/>
+	<xacro:property name="link_mass" value="1"/>
 
 <!-- Links -->
 
