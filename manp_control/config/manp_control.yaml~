@@ -1,0 +1,23 @@
+ldtester:
+  # Publish all joint states -----------------------------------
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 50  
+
+  # Position Controllers ---------------------------------------
+  lwheel_state_controller:
+    type: effort_controllers/JointEffortController
+    joint: lwheel_j
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  lbwheel_state_controller:
+    type: effort_controllers/JointEffortController
+    joint: lwheel_j
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  rwheel_state_controller:
+    type: effort_controllers/JointEffortController
+    joint: rwheel_j
+    pid: {p: 100.0, i: 0.01, d: 10.0}
+  rbwheel_state_controller:
+    type: effort_controllers/JointEffortController
+    joint: rbwheel_j
+    pid: {p: 100.0, i: 0.01, d: 10.0}

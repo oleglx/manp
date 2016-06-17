@@ -1,0 +1,35 @@
+<launch>
+
+	<!-- Define world for gazebo -->	
+	
+  	<include file="$(find gazebo_ros)/launch/empty_world.launch">
+    		<arg name="world_name" value="$(find manp_gazebo)/worlds/manp.world"/>
+      	</include>
+
+	<!-- Sending robot description to parameter server --> 
+
+	<param name="robot_description" command="$(find xacro)/xacro '$(find manp_description)/urdf/manp.xacro'" />
+	
+	<!-- Spawning model of robot in gazebo world -->
+
+	<node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -z 1 -model manp" />
+
+	<!-- Launching node, forming controll from input -->
+
+	<node name="manp_controller" pkg="manp_control" type="manp_controller" />
+ 
+    	<!-- Load joint controller configurations from YAML file to parameter server -->
+
+ 	 <rosparam file="$(find manp_control)/config/manp_control.yaml" command="load"/>
+
+  	<!-- load the controllers -->
+
+  	<node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+		output="screen" ns="/manp" args="world_to_base_state_contoller link1_to_link2_state_controller link2_to_link3_state_controller joint_state_controller"/>
+
+  	<!-- convert joint states to TF transforms for rviz, etc -->
+
+  	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
+    		<remap from="/joint_states" to="/manp/joint_states" />
+  	</node>
+</launch>

@@ -1,17 +1,9 @@
 <launch>
-	
-	<!-- Rviz and such launch file -->
-	
-	<!-- Setting gui for joint state publisher -->
-
-	<param name="use_gui" value="true"/>
-
-	<!-- Sending robot description to parameter server --> 
+	<arg name="gui" default="true" />
 	
 	<param name="robot_description" 
 	       command="$(find xacro)/xacro '$(find manp_description)/urdf/manp.xacro'" />
-	
-	<!-- Launching nodes: joint_state_publisher, robot_state_publisher, rviz --> 
+	<param name="use_gui" value="$(arg gui)"/>
 
 	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
 	<node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
