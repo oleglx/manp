@@ -120,6 +120,7 @@
 		<child link="link2"/>
 		<origin xyz="0 ${-width} ${height/2-0.5}" rpy="0 0 0"/>
 		<axis xyz="0 1 0"/>
+		<limit lower="0" upper="${pi}" effort="10000" velocity="1"/>
 	</joint>
 	
 	<joint name="link2_to_link3" type="continuous">
@@ -176,14 +177,20 @@
 
 	<gazebo reference="link1">
     		<selfCollide>true</selfCollide>
+		<mu1>0.2</mu1>
+   		<mu2>0.2</mu2>
 	</gazebo>
 	
 	<gazebo reference="link2">
     		<selfCollide>true</selfCollide>
+		<mu1>0.2</mu1>
+    		<mu2>0.2</mu2>
 	</gazebo>
 
 	<gazebo reference="link3">
     		<selfCollide>true</selfCollide>
+		<mu1>0.2</mu1>
+    		<mu2>0.2</mu2>
 	</gazebo>
 
 <!-- ################################# -->
