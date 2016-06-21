@@ -107,7 +107,7 @@ int main(int argc, char **argv){
 */
     // send signals to the model motors
     std_msgs::Float64 out_msg;
-    out_msg.data = 0.1;
+    out_msg.data = 0.0;
     wtb_pub.publish(out_msg);
     out_msg.data = 0.0;
     l1tl2_pub.publish(out_msg);

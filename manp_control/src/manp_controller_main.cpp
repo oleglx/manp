@@ -111,7 +111,7 @@ int main(int argc, char **argv){
     wtb_pub.publish(out_msg);
     out_msg.data = 0.0;
     l1tl2_pub.publish(out_msg);
-    out_msg.data = 0.0;
+    out_msg.data = 0.01;
     l2tl3_pub.publish(out_msg);
     // wait next message
     //ros::spinOnce(); 
