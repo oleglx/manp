@@ -26,8 +26,8 @@
 			<origin xyz="0 0 ${base_h/2}"/>
       			<mass value="${base_link_mass}"/>
       			<inertia 
-				ixx="${base_link_mass*(3*base_r*base_r+base_h*base_h)/12}" ixy="0.0" ixz="0.0" 
-				iyy="${base_link_mass*(3*base_r*base_r+base_h*base_h)/12}" iyz="0.0" izz="${base_link_mass*base_r*base_r/2}"
+				ixx="${base_link_mass*(3*base_r*base_r+base_h*base_h)/12}" ixy="1e-3" ixz="1e-3" 
+				iyy="${base_link_mass*(3*base_r*base_r+base_h*base_h)/12}" iyz="1e-3" izz="${base_link_mass*base_r*base_r/2}"
 			/>
     		</inertial>
 		<collision>
@@ -48,7 +48,7 @@
 		<inertial>
 			<origin xyz="0 0 ${height/4}"/>
       			<mass value="${link_mass/2}"/>
-      			<inertia ixx="${link_mass*height*height/6}" ixy="0.0" ixz="0.0" iyy="${link_mass*height*height/6}" iyz="0.0" izz="1e-10"/>
+      			<inertia ixx="${link_mass*height*height/6}" ixy="1e-3" ixz="1e-3" iyy="${link_mass*height*height/6}" iyz="1e-3" izz="1e-3"/>
     		</inertial>
 		<collision>
       			<geometry>
@@ -68,7 +68,7 @@
 		<inertial>
 			<origin xyz="0 0 ${height/2}"/>
       			<mass value="${link_mass}"/>
-      			<inertia ixx="${link_mass*height*height/3}" ixy="0.0" ixz="0.0" iyy="${link_mass*height*height/3}" iyz="0.0" izz="1e-10"/>
+      			<inertia ixx="${link_mass*height*height/3}" ixy="1e-3" ixz="1e-3" iyy="${link_mass*height*height/3}" iyz="1e-3" izz="1e-3"/>
     		</inertial>
 		<collision>
       			<geometry>
@@ -88,7 +88,7 @@
 		<inertial>
 			<origin xyz="0 0 ${height/2}"/>
       			<mass value="${link_mass}"/>
-      			<inertia ixx="${link_mass*height*height/3}" ixy="0.0" ixz="0.0" iyy="${link_mass*height*height/3}" iyz="0.0" izz="1e-10"/>
+      			<inertia ixx="${link_mass*height*height/3}" ixy="1e-3" ixz="1e-3" iyy="${link_mass*height*height/3}" iyz="1e-3" izz="1e-3"/>
     		</inertial>
 		<collision>
 			<geometry>

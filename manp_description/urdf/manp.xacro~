@@ -8,8 +8,8 @@
 	<xacro:property name="height" value="4"/>
 	<xacro:property name="base_h" value="0.5"/>
 	<xacro:property name="base_r" value="1"/>
-	<xacro:property name="base_link_mass" value="1"/>
-	<xacro:property name="link_mass" value="1"/>
+	<xacro:property name="base_link_mass" value="20"/>
+	<xacro:property name="link_mass" value="40"/>
 
 <!-- Links -->
 
@@ -48,7 +48,7 @@
 		<inertial>
 			<origin xyz="0 0 ${height/4}"/>
       			<mass value="${link_mass/2}"/>
-      			<inertia ixx="${link_mass*height*height/6}" ixy="0.0" ixz="0.0" iyy="${link_mass*height*height/6}" iyz="0.0" izz="1e-10"/>
+      			<inertia ixx="${link_mass*height*height/6}" ixy="0.0" ixz="0.0" iyy="${link_mass*height*height/6}" iyz="0.0" izz="1e-3"/>
     		</inertial>
 		<collision>
       			<geometry>
@@ -68,7 +68,7 @@
 		<inertial>
 			<origin xyz="0 0 ${height/2}"/>
       			<mass value="${link_mass}"/>
-      			<inertia ixx="${link_mass*height*height/3}" ixy="0.0" ixz="0.0" iyy="${link_mass*height*height/3}" iyz="0.0" izz="1e-10"/>
+      			<inertia ixx="${link_mass*height*height/3}" ixy="0.0" ixz="0.0" iyy="${link_mass*height*height/3}" iyz="0.0" izz="1e-3"/>
     		</inertial>
 		<collision>
       			<geometry>
@@ -88,7 +88,7 @@
 		<inertial>
 			<origin xyz="0 0 ${height/2}"/>
       			<mass value="${link_mass}"/>
-      			<inertia ixx="${link_mass*height*height/3}" ixy="0.0" ixz="0.0" iyy="${link_mass*height*height/3}" iyz="0.0" izz="1e-10"/>
+      			<inertia ixx="${link_mass*height*height/3}" ixy="0.0" ixz="0.0" iyy="${link_mass*height*height/3}" iyz="0.0" izz="1e-3"/>
     		</inertial>
 		<collision>
 			<geometry>

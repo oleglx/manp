@@ -107,10 +107,12 @@ int main(int argc, char **argv){
 */
     // send signals to the model motors
     std_msgs::Float64 out_msg;
-    out_msg.data = 0.01;
+    out_msg.data = 10;
     wtb_pub.publish(out_msg);
-    //l1tl2_pub.publish(out_msg);
-    //l2tl3_pub.publish(out_msg);
+    out_msg.data = 0.0;
+    l1tl2_pub.publish(out_msg);
+    out_msg.data = 0.0;
+    l2tl3_pub.publish(out_msg);
     // wait next message
     //ros::spinOnce(); 
     r.sleep();
