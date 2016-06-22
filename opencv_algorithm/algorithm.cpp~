@@ -1,6 +1,5 @@
 #include <vector>
 #include <algorithm>
-#include <iterator>
 #include <cmath>
 #include <cv.h>
 #include <highgui.h>
@@ -9,6 +8,38 @@
 using namespace cv;
 using std::vector;
 
+class Manipulator {
+	private:
+		std::vector<float> base_point, angles, link_lengths;
+	public:
+		std::vector<float> point_zero, point_one, point_two;
+
+		Manipulator( std::vector<float> manp_base_point, std::vector<float> manp_angles, std::vector<float> manp_link_lengths ) {
+			setManipulator( manp_base_point, manp_angles, manp_link_lengths );		
+		}
+		
+		void setManipulator( std::vector<float> manp_base_point, std::vector<float> manp_angles, std::vector<float> manp_link_lengths ) {
+			base_point = manp_base_point;
+			angles = manp_angles;
+			link_lengths = manp_link_lengths;
+		}
+
+		void convertCoord() {
+			point_zero.resize(2);
+			point_one.resize(2);
+			point_two.resize(2);			
+
+			point_zero[1] = base_point[1];
+			point_zero[2] = base_point[2];
+
+			point_one[1] = base_point[1] + link_lengths[1]*cos(angles[1]);
+			point_one[2] = base_point[2] + link_lengths[1]*sin(angles[1]);
+			
+			point_two[1] = point_one[1] + link_lengths[2]*cos(angles[2]);
+			point_two[2] = point_one[2] + link_lengths[2]*sin(angles[2]);
+		}			
+};	
+
 /*
 void MyEllipse( Mat img, double angle );
 void MyFilledCircle( Mat img, Point center );
@@ -16,12 +47,30 @@ void MyPolygon( Mat img );
 void MyLine( Mat img, Point start, Point end );
 */ 
 int main( void ){
+	float b[2] = {1,1};
+	float c[2] = {w/40,w/40};
+
+	std::vector<float> manp_base_point(2);
+	manp_base_point[0] = w/2;
+	manp_base_point[0] = 3*w/4;
+	std::vector<float> manp_angles(b,b+2);
+	std::vector<float> manp_link_lengths(c,c+2);
 
 	char graph_window[] = "Graph FABRIK";
 	Mat graph_image = Mat(Size(w,w),CV_8UC3,Scalar(255,255,255));
-	line(graph_image,Point(w/2,3*w/4),Point(w/2,w/2),Scalar( 0, 0, 0 ),2,8);
-	circle(graph_image,Point(w/2,w/2),w/100,Scalar( 0, 0, 255 ),-1,8);
-	circle(graph_image,Point(w/2,3*w/4),w/100,Scalar( 0, 0, 255 ),-1,8);	
+	
+	Manipulator manp_1( manp_base_point, manp_angles, manp_link_lengths);
+	
+	manp_1.convertCoord();
+
+line( graph_image, Point( 5,5 ), Point( 111, 111 ), Scalar( 0, 0, 0 ), 2, 8 );
+
+	line( graph_image, Point( manp_1.point_zero[0], manp_1.point_zero[1] ), Point( manp_1.point_one[0], manp_1.point_one[1] ), Scalar( 0, 0, 0 ), 2, 8 );
+	line( graph_image, Point( manp_1.point_one[0], manp_1.point_one[1] ), Point( manp_1.point_two[0], manp_1.point_two[1] ), Scalar( 0, 0, 0 ), 2, 8 );
+
+	circle( graph_image, Point( manp_1.point_zero[0], manp_1.point_zero[1] ), w/100, Scalar( 0, 0, 255 ), -1, 8 );
+	/*circle( graph_image, Point( manp_1.point_one[1], manp_1.point_one[1] ), w/100, Scalar( 0, 0, 255 ), -1, 8 );*/
+	/*circle( graph_image, Point( manp_1.point_two[1], manp_1.point_two[2] ), w/100, Scalar( 0, 0, 255 ), -1, 8 );*/	
 	
 	/*
 	/// Windows names
@@ -141,28 +190,3 @@ void MyLine( Mat img, Point start, Point end )
 	lineType );
 }
 */
-
-class Manipulator {
-	private:
-		std::vector<float> base_point, angles, link_lengths;
-		std::vector<float> point_one, point_two;
-	public:
-		Manipulator( std::vector<float> manp_base_point, std::vector<float> manp_angles, std::vector<float> manp_link_lengths ) {
-			setManipulator( manp_base_point, manp_angles, manp_link_lengths );		
-		}
-		
-		void setManipulator( std::vector<float> manp_base_point, std::vector<float> manp_angles, std::vector<float> manp_link_lengths ) {
-			base_point.resize(2);
-			angles.resize(2);
-			link_lengths.resize(2);
-
-			base_point = manp_base_point;
-			angles = manp_angles;
-			link_lengths = manp_link_lengths;
-		}
-		void convert() {
-			point_one[1] = base_point[1] + link_lengths[1]*cos(angles[1]);
-			point_one[1] = base_point[1] + link_lengths[1]*sin(angles[1]);
-		
-		}		
-};	

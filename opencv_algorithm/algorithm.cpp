@@ -1,6 +1,5 @@
 #include <vector>
 #include <algorithm>
-#include <iterator>
 #include <cmath>
 #include <cv.h>
 #include <highgui.h>
@@ -9,6 +8,61 @@
 using namespace cv;
 using std::vector;
 
+class Manipulator {
+	private:
+		std::vector<float> base_point, angles, link_lengths;
+	public:
+		std::vector<float> point_zero, point_one, point_two;
+
+		Manipulator( std::vector<float> manp_base_point, std::vector<float> manp_angles, std::vector<float> manp_link_lengths ) {
+			setManipulator( manp_base_point, manp_angles, manp_link_lengths );		
+		}
+		
+		void setManipulator( std::vector<float> manp_base_point, std::vector<float> manp_angles, std::vector<float> manp_link_lengths ) {
+			base_point = manp_base_point;
+			angles = manp_angles;
+			link_lengths = manp_link_lengths;
+		}
+
+		void convertCoord() {
+			point_zero.resize(2);
+			point_one.resize(2);
+			point_two.resize(2);			
+
+			point_zero[1] = base_point[1];
+			point_zero[2] = base_point[2];
+
+			point_one[1] = base_point[1] + link_lengths[1]*cos(angles[1]);
+			point_one[2] = base_point[2] + link_lengths[1]*sin(angles[1]);
+			
+			point_two[1] = point_one[1] + link_lengths[2]*cos(angles[2]);
+			point_two[2] = point_one[2] + link_lengths[2]*sin(angles[2]);
+		}			
+};	
+
+int Manipulator_test(){
+	vector<float> bp(2),an(2),ll(2);
+        bp[0] = 3;
+        bp[1] = 3;
+        an[0] = M_PI/4;
+        an[1] = M_PI/6;
+        ll[0] = 1;
+        ll[1] = 3;
+	Manipulator m1(bp,an,ll);
+        m1.convertCoord();
+        float eps = 1e-6;
+        if(fabs(point_zero[0]-3)>eps){
+          fprrintf(stderr, "Wrong point_zero[0]\n");
+          return -1;
+        }
+        if(point_zero[1]!=3){
+          fprrintf(stderr, "Wrong point_zero[1]\n");
+          return -1;
+        }
+// ....
+        return 0;
+}
+
 /*
 void MyEllipse( Mat img, double angle );
 void MyFilledCircle( Mat img, Point center );
@@ -16,12 +70,32 @@ void MyPolygon( Mat img );
 void MyLine( Mat img, Point start, Point end );
 */ 
 int main( void ){
+        if(Manipulator_test()!=0)
+            return -1;
+	float b[2] = {1,1};
+	float c[2] = {w/40,w/40};
+
+	std::vector<float> manp_base_point(2);
+	manp_base_point[0] = w/2;
+	manp_base_point[0] = 3*w/4;
+	std::vector<float> manp_angles(b,b+2);
+	std::vector<float> manp_link_lengths(c,c+2);
 
 	char graph_window[] = "Graph FABRIK";
 	Mat graph_image = Mat(Size(w,w),CV_8UC3,Scalar(255,255,255));
-	line(graph_image,Point(w/2,3*w/4),Point(w/2,w/2),Scalar( 0, 0, 0 ),2,8);
-	circle(graph_image,Point(w/2,w/2),w/100,Scalar( 0, 0, 255 ),-1,8);
-	circle(graph_image,Point(w/2,3*w/4),w/100,Scalar( 0, 0, 255 ),-1,8);	
+	
+	Manipulator manp_1( manp_base_point, manp_angles, manp_link_lengths);
+	
+	manp_1.convertCoord();
+
+line( graph_image, Point( 5,5 ), Point( 111, 111 ), Scalar( 0, 0, 0 ), 2, 8 );
+
+	line( graph_image, Point( manp_1.point_zero[0], manp_1.point_zero[1] ), Point( manp_1.point_one[0], manp_1.point_one[1] ), Scalar( 0, 0, 0 ), 2, 8 );
+	line( graph_image, Point( manp_1.point_one[0], manp_1.point_one[1] ), Point( manp_1.point_two[0], manp_1.point_two[1] ), Scalar( 0, 0, 0 ), 2, 8 );
+
+	circle( graph_image, Point( manp_1.point_zero[0], manp_1.point_zero[1] ), w/100, Scalar( 0, 0, 255 ), -1, 8 );
+	/*circle( graph_image, Point( manp_1.point_one[1], manp_1.point_one[1] ), w/100, Scalar( 0, 0, 255 ), -1, 8 );*/
+	/*circle( graph_image, Point( manp_1.point_two[1], manp_1.point_two[2] ), w/100, Scalar( 0, 0, 255 ), -1, 8 );*/	
 	
 	/*
 	/// Windows names
@@ -141,30 +215,3 @@ void MyLine( Mat img, Point start, Point end )
 	lineType );
 }
 */
-
-class Manipulator {
-	private:
-		std::vector<float> base_point, angles, link_lengths;
-		std::vector<float> point_one, point_two;
-	public:
-		Manipulator( std::vector<float> manp_base_point, std::vector<float> manp_angles, std::vector<float> manp_link_lengths ) {
-			setManipulator( manp_base_point, manp_angles, manp_link_lengths );		
-		}
-		
-		void setManipulator( std::vector<float> manp_base_point, std::vector<float> manp_angles, std::vector<float> manp_link_lengths ) {
-			base_point.resize(2);
-			angles.resize(2);
-			link_lengths.resize(2);
-
-			base_point = manp_base_point;
-			angles = manp_angles;
-			link_lengths = manp_link_lengths;
-		}
-		void convert() {
-			point_one[1] = base_point[1] + link_lengths[1]*cos(angles[1]);
-			point_one[2] = base_point[2] + link_lengths[1]*sin(angles[1]);
-			
-			point_two[1] = point_one[1] + link_lengths[2]*cos(angles[2]);
-			point_two[2] = point_one[2] + link_lengths[2]*sin(angles[2]);
-		}		
-};	
