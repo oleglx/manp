@@ -1,0 +1,1 @@
+/home/pal/catkin_ws/src/manp/opencv_algorithm/build/CMakeFiles/algorithm.dir
