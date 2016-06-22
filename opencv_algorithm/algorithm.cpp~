@@ -24,23 +24,19 @@ class Manipulator {
 			link_lengths = manp_link_lengths;
 		}
 
-		void convertCoord() {
-			point_zero.resize(2);
-			point_one.resize(2);
-			point_two.resize(2);			
+		void getPoints( Point& point_zero, Point& point_one, Point& point_two ) {	
+			point_zero.x = base_point[0];
+			point_zero.y = base_point[1];
 
-			point_zero[0] = base_point[0];
-			point_zero[1] = base_point[1];
-
-			point_one[0] = base_point[0] + link_lengths[0]*cos(angles[0]);
-			point_one[1] = base_point[1] + link_lengths[0]*sin(angles[0]);
+			point_one.x = base_point[0] + link_lengths[0]*cos(angles[0]);
+			point_one.y = base_point[1] + link_lengths[0]*sin(angles[0]);
 			
-			point_two[0] = point_one[0] + link_lengths[1]*cos(angles[1]);
-			point_two[1] = point_one[1] + link_lengths[1]*sin(angles[1]);
+			point_two.x = point_one.x + link_lengths[1]*cos(angles[1]);
+			point_two.y = point_one.y + link_lengths[1]*sin(angles[1]);
 		}			
 };	
 
-int Manipulator_test() { 
+/*int Manipulator_test() { 
 	vector<float> bp(2),an(2),ll(2);
 
         bp[0] = 3;
@@ -86,7 +82,9 @@ int Manipulator_test() {
         }
 
         return 0;
-}
+}*/
+
+void FABRIK(int iter, Point zero, Point one, Point two, Point dest);
 
 /*
 void MyEllipse( Mat img, double angle );
@@ -96,31 +94,38 @@ void MyLine( Mat img, Point start, Point end );
 */ 
 int main( void ) {
 
-        if(Manipulator_test()!=0)
-        	return -1;
-	
-	float b[2] = {1,1};
-	float c[2] = {w/10,w/10};
+        //if(Manipulator_test()!=0)
+        //	return -1;
 
 	std::vector<float> manp_base_point(2);
 	manp_base_point[0] = w/2;
-	manp_base_point[0] = 3*w/4;
-	std::vector<float> manp_angles(b,b+2);
-	std::vector<float> manp_link_lengths(c,c+2);
+	manp_base_point[1] = 1*w/4;
+
+	std::vector<float> manp_angles(2);
+	manp_angles[0] = M_PI/2;
+	manp_angles[1] = M_PI/2;
+
+	std::vector<float> manp_link_lengths(2);
+	manp_link_lengths[0] = w/5;
+	manp_link_lengths[1] = w/5;
 
 	char graph_window[] = "Graph FABRIK";
 	Mat graph_image = Mat(Size(w,w),CV_8UC3,Scalar(255,255,255));
 	
 	Manipulator manp_1( manp_base_point, manp_angles, manp_link_lengths);
+
+	Point zero;
+	Point one;
+	Point two;
 	
-	manp_1.convertCoord();
+	manp_1.getPoints(zero, one, two);
 
-	line( graph_image, Point( manp_1.point_zero[0], manp_1.point_zero[1] ), Point( manp_1.point_one[0], manp_1.point_one[1] ), Scalar( 0, 0, 0 ), 2, 8 );
-	line( graph_image, Point( manp_1.point_one[0], manp_1.point_one[1] ), Point( manp_1.point_two[0], manp_1.point_two[1] ), Scalar( 0, 0, 0 ), 2, 8 );
+	line( graph_image, zero, one, Scalar( 0, 0, 0 ), 2, 8 );
+	line( graph_image, one, two, Scalar( 0, 0, 0 ), 2, 8 );
 
-	circle( graph_image, Point( manp_1.point_zero[0], manp_1.point_zero[1] ), w/100, Scalar( 0, 0, 255 ), -1, 8 );
-	circle( graph_image, Point( manp_1.point_one[0], manp_1.point_one[1] ), w/100, Scalar( 0, 0, 255 ), -1, 8 );
-	circle( graph_image, Point( manp_1.point_two[0], manp_1.point_two[1] ), w/100, Scalar( 0, 0, 255 ), -1, 8 );	
+	circle( graph_image, zero, w/200, Scalar( 0, 0, 255 ), -1, 8 );
+	circle( graph_image, one, w/200, Scalar( 0, 0, 255 ), -1, 8 );
+	circle( graph_image, two, w/200, Scalar( 0, 0, 255 ), -1, 8 );	
 	
 	/*
 	/// Windows names
