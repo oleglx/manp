@@ -8,12 +8,59 @@
 using namespace cv;
 using std::vector;
 
+int getPoint ( float link_length, Point one, Point two, Point& out ) {
+	float k, b, desc, A, B, C, eps_one, eps_two;
+	Point inter_one, inter_two;
+
+	k = (one.y - two.y)/(one.x - two.x);
+	b = (one.y - k * one.x);
+
+	A = pow( k, 2 ) + 1;
+	B = 2*b*k - 2*k*one.y - 2*one.x;
+	C = pow( b, 2 ) + 2*b*one.y + pow( one.x, 2 ) + pow( one.y, 2) - pow( link_length, 2 );
+ 
+	desc = pow( B, 2 ) - 4 * A * C; 
+	if (desc < 0) {
+		fprintf( stderr, "Desc < 0\n" );
+		return -1;
+	}
+	inter_one.x = (-B + pow( desc, 0.5 ) )/(2*A);
+	inter_two.x = (-B - pow( desc, 0.5 ) )/(2*A);
+
+	inter_one.y = k*inter_one.x + b;
+	inter_two.y = k*inter_two.x + b;
+
+	eps_one = pow( pow(inter_one.x - two.x, 2 ) + pow(inter_one.y - two.y, 2 ), 0.5 );
+	eps_two = pow( pow(inter_one.x - two.x, 2 ) + pow(inter_one.y - two.y, 2 ), 0.5 );
+	
+	if ( eps_one > eps_two )
+		out = inter_two;
+	else out = inter_one;
+
+	return 0;
+
+}
+
+void printImg(char* graph_window, Mat graph_image, Point zero, Point one, Point two ) {
+	
+	graph_image.setTo(Scalar(255,255,255));
+
+	line( graph_image, zero, one, Scalar( 0, 0, 0 ), 2, 8 );
+	line( graph_image, one, two, Scalar( 0, 0, 0 ), 2, 8 );
+
+	circle( graph_image, zero, w/200, Scalar( 255, 0, 0 ), -1, 8 );
+	circle( graph_image, one, w/200, Scalar( 0, 0, 255 ), -1, 8 );
+	circle( graph_image, two, w/200, Scalar( 0, 0, 255 ), -1, 8 );
+
+	imshow(graph_window,graph_image);
+	moveWindow(graph_window, 0, 200 );
+	waitKey(0);
+}	
+
 class Manipulator {
 	private:
 		std::vector<float> base_point, angles, link_lengths;
 	public:
-		std::vector<float> point_zero, point_one, point_two;
-
 		Manipulator( std::vector<float> manp_base_point, std::vector<float> manp_angles, std::vector<float> manp_link_lengths ) {
 			setManipulator( manp_base_point, manp_angles, manp_link_lengths );		
 		}
@@ -33,9 +80,62 @@ class Manipulator {
 			
 			point_two.x = point_one.x + link_lengths[1]*cos(angles[1]);
 			point_two.y = point_one.y + link_lengths[1]*sin(angles[1]);
-		}			
-};	
+		}
+		
+		void FABRIK(char* graph_window, int iter, Point zero, Point one, Point two, Point dest, Mat graph_image ) {
+			Point zero_pv, one_pv, two_pv;
+								
+			for ( int i = 0; i < iter/2; i++ ) {
+			//Staring reverse pass				
+				zero_pv = zero;
+				one_pv = one;			
+				two_pv = two;
 
+				//Moved point TWO to destination
+				two = dest;
+
+				//Prinring this step
+				printImg(graph_window, graph_image, zero, one, two );
+			
+				//Moved point ONE for the reverse pass
+				getPoint( link_lengths[1], two, one_pv, one );
+				
+				//Prinring this step
+				printImg(graph_window, graph_image, zero, one, two );
+				
+				//Moved point ZERO for the reverse pass
+				getPoint( link_lengths[0], one, zero_pv, zero);
+				
+				//Printing this step
+				printImg(graph_window, graph_image, zero, one, two );
+						
+			//Starting direct pass
+				one_pv = one;			
+				two_pv = two;
+				
+				//Moved point zero to previous position
+				zero = zero_pv;
+
+				//Prinring this step
+				printImg(graph_window, graph_image, zero, one, two );
+				
+				//Moved point one for the direct pass
+				getPoint( link_lengths[0], zero, one_pv, one );
+				
+				//Prinring this step
+				printImg(graph_window, graph_image, zero, one, two );
+				
+				//Moved point two for the direct pass
+				getPoint( link_lengths[1], one, two_pv, two );
+				
+				//Prinring this step
+				printImg(graph_window, graph_image, zero, one, two );
+			}
+
+		}
+
+
+};
 /*int Manipulator_test() { 
 	vector<float> bp(2),an(2),ll(2);
 
@@ -84,8 +184,6 @@ class Manipulator {
         return 0;
 }*/
 
-//void FABRIK(int iter, Point zero, Point one, Point two, Point dest);
-
 /*
 void MyEllipse( Mat img, double angle );
 void MyFilledCircle( Mat img, Point center );
@@ -99,7 +197,7 @@ int main( void ) {
 
 	std::vector<float> manp_base_point(2);
 	manp_base_point[0] = w/2;
-	manp_base_point[1] = 1*w/4;
+	manp_base_point[1] = w/2;
 
 	std::vector<float> manp_angles(2);
 	manp_angles[0] = M_PI/2;
@@ -120,12 +218,11 @@ int main( void ) {
 	
 	manp_1.getPoints(zero, one, two);
 
-	line( graph_image, zero, one, Scalar( 0, 0, 0 ), 2, 8 );
-	line( graph_image, one, two, Scalar( 0, 0, 0 ), 2, 8 );
+	Point dest;
+	dest.x = 3*w/4;
+	dest.y = 3*w/4;
 
-	circle( graph_image, zero, w/200, Scalar( 0, 0, 255 ), -1, 8 );
-	circle( graph_image, one, w/200, Scalar( 0, 0, 255 ), -1, 8 );
-	circle( graph_image, two, w/200, Scalar( 0, 0, 255 ), -1, 8 );	
+	manp_1.FABRIK( graph_window, 2, zero, one, two, dest, graph_image );
 	
 	/*
 	/// Windows names
