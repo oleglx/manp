@@ -42,6 +42,14 @@ class Manipulator {
 			point_two.x = point_one.x + link_lengths[1]*cos(angles[1]);
 			point_two.y = point_one.y + link_lengths[1]*sin(angles[1]);
 		}
+
+		void getCoordinates( Point2f point_zero, Point2f point_one, Point2f point_two ) {
+			base_point[0] = point_zero.x;
+			base_point[1] = point_zero.y;
+
+			angles[0] = atan( (point_one.y - point_zero.y)/(point_one.x - point_zero.x) );
+			angles[1] = atan( (point_two.y - point_one.y)/(point_two.x - point_one.x) );				
+		}
 		
 		void FABRIK(char* graph_window, int iter, Point2f zero, Point2f one, Point2f two, Point2f dest, Mat graph_image ) {
 			Point2f zero_pv, one_pv, two_pv;
