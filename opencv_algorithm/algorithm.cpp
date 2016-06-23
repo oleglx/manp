@@ -8,54 +8,17 @@
 using namespace cv;
 using std::vector;
 
-int getPoint ( float link_length, Point one, Point two, Point& out ) {
-	float k, b, desc, A, B, C, eps_one, eps_two;
-	Point inter_one, inter_two;
 
-	k = (one.y - two.y)/(one.x - two.x);
-	b = (one.y - k * one.x);
+void getLine (float link_length, Point2f stationary, Point2f moving, float& k, float& b);
+void choosePoint (Point2f inter_one, Point2f inter_two, Point2f moving, Point2f& out );
+int solvePol (float A, float B, float C, std::vector<float>& solution);
+int getInterPoint ( float link_length, Point2f one, Point2f two, Point2f& out );
+void printImg(char* graph_window, Mat graph_image, Point2f zero, Point2f one, Point2f two );
 
-	A = pow( k, 2 ) + 1;
-	B = 2*b*k - 2*k*one.y - 2*one.x;
-	C = pow( b, 2 ) + 2*b*one.y + pow( one.x, 2 ) + pow( one.y, 2) - pow( link_length, 2 );
- 
-	desc = pow( B, 2 ) - 4 * A * C; 
-	if (desc < 0) {
-		fprintf( stderr, "Desc < 0\n" );
-		return -1;
-	}
-	inter_one.x = (-B + pow( desc, 0.5 ) )/(2*A);
-	inter_two.x = (-B - pow( desc, 0.5 ) )/(2*A);
-
-	inter_one.y = k*inter_one.x + b;
-	inter_two.y = k*inter_two.x + b;
-
-	eps_one = pow( pow(inter_one.x - two.x, 2 ) + pow(inter_one.y - two.y, 2 ), 0.5 );
-	eps_two = pow( pow(inter_one.x - two.x, 2 ) + pow(inter_one.y - two.y, 2 ), 0.5 );
-	
-	if ( eps_one > eps_two )
-		out = inter_two;
-	else out = inter_one;
-
-	return 0;
-
-}
-
-void printImg(char* graph_window, Mat graph_image, Point zero, Point one, Point two ) {
-	
-	graph_image.setTo(Scalar(255,255,255));
-
-	line( graph_image, zero, one, Scalar( 0, 0, 0 ), 2, 8 );
-	line( graph_image, one, two, Scalar( 0, 0, 0 ), 2, 8 );
-
-	circle( graph_image, zero, w/200, Scalar( 255, 0, 0 ), -1, 8 );
-	circle( graph_image, one, w/200, Scalar( 0, 0, 255 ), -1, 8 );
-	circle( graph_image, two, w/200, Scalar( 0, 0, 255 ), -1, 8 );
-
-	imshow(graph_window,graph_image);
-	moveWindow(graph_window, 0, 200 );
-	waitKey(0);
-}	
+int getPoints_test();
+int choosePoint_test();
+int getLine_test();
+int solvePol_test();
 
 class Manipulator {
 	private:
@@ -71,7 +34,7 @@ class Manipulator {
 			link_lengths = manp_link_lengths;
 		}
 
-		void getPoints( Point& point_zero, Point& point_one, Point& point_two ) {	
+		void getPoints( Point2f& point_zero, Point2f& point_one, Point2f& point_two ) {	
 			point_zero.x = base_point[0];
 			point_zero.y = base_point[1];
 
@@ -82,8 +45,8 @@ class Manipulator {
 			point_two.y = point_one.y + link_lengths[1]*sin(angles[1]);
 		}
 		
-		void FABRIK(char* graph_window, int iter, Point zero, Point one, Point two, Point dest, Mat graph_image ) {
-			Point zero_pv, one_pv, two_pv;
+		void FABRIK(char* graph_window, int iter, Point2f zero, Point2f one, Point2f two, Point2f dest, Mat graph_image ) {
+			Point2f zero_pv, one_pv, two_pv;
 								
 			for ( int i = 0; i < iter/2; i++ ) {
 			//Staring reverse pass				
@@ -98,13 +61,13 @@ class Manipulator {
 				printImg(graph_window, graph_image, zero, one, two );
 			
 				//Moved point ONE for the reverse pass
-				getPoint( link_lengths[1], two, one_pv, one );
+				getInterPoint( link_lengths[1], two, one_pv, one );
 				
 				//Prinring this step
 				printImg(graph_window, graph_image, zero, one, two );
 				
 				//Moved point ZERO for the reverse pass
-				getPoint( link_lengths[0], one, zero_pv, zero);
+				getInterPoint( link_lengths[0], one, zero_pv, zero);
 				
 				//Printing this step
 				printImg(graph_window, graph_image, zero, one, two );
@@ -120,13 +83,13 @@ class Manipulator {
 				printImg(graph_window, graph_image, zero, one, two );
 				
 				//Moved point one for the direct pass
-				getPoint( link_lengths[0], zero, one_pv, one );
+				getInterPoint( link_lengths[0], zero, one_pv, one );
 				
 				//Prinring this step
 				printImg(graph_window, graph_image, zero, one, two );
 				
 				//Moved point two for the direct pass
-				getPoint( link_lengths[1], one, two_pv, two );
+				getInterPoint( link_lengths[1], one, two_pv, two );
 				
 				//Prinring this step
 				printImg(graph_window, graph_image, zero, one, two );
@@ -136,64 +99,23 @@ class Manipulator {
 
 
 };
-/*int Manipulator_test() { 
-	vector<float> bp(2),an(2),ll(2);
 
-        bp[0] = 3;
-        bp[1] = 3;
-        an[0] = M_PI/4;
-        an[1] = M_PI/6;
-        ll[0] = 1;
-        ll[1] = 3;
 
-	Manipulator m1( bp, an, ll );
-        m1.convertCoord();
-
-        float eps = 1e-6;
-
-        if ( fabs ( m1.point_zero[0]-3 ) > eps ) {
-        	fprintf( stderr, "Wrong point_zero[0]\n" );
-          	return -1;
-        }
-
-        if ( fabs ( m1.point_zero[1]-3 ) > eps ) {
-        	fprintf( stderr, "Wrong point_zero[1]\n" );
-        	return -1;
-        }
-	
-	if ( fabs ( m1.point_one[0]-3.7071067811865475 ) > eps ) {
-        	fprintf( stderr, "Wrong point_one[0]\n" );
-        	return -1;
-        }
-	
-	if ( fabs ( m1.point_one[1]-3.7071067811865475 ) > eps ) {
-        	fprintf( stderr, "Wrong point_one[1]\n" );
-        	return -1;
-        }
-
-	if ( fabs ( m1.point_two[0]-6.305182992539864 ) > eps ) {
-        	fprintf( stderr, "Wrong point_two[0]\n" );
-        	return -1;
-        }
-
-	if ( fabs ( m1.point_two[1]-5.207106781186548 ) > eps ) {
-        	fprintf( stderr, "Wrong point_two[1]\n" );
-        	return -1;
-        }
-
-        return 0;
-}*/
-
-/*
-void MyEllipse( Mat img, double angle );
-void MyFilledCircle( Mat img, Point center );
-void MyPolygon( Mat img );
-void MyLine( Mat img, Point start, Point end );
-*/ 
 int main( void ) {
 
-        //if(Manipulator_test()!=0)
-        //	return -1;
+	//--------Testing-----------
+
+        if(getPoints_test()!=0)
+        	return -1;
+
+	if(getLine_test()!=0)
+		return -1;
+
+	if(choosePoint_test()!=0)
+		return -1;	
+	
+	if(solvePol_test()!=0)
+		return -1;
 
 	std::vector<float> manp_base_point(2);
 	manp_base_point[0] = w/2;
@@ -212,133 +134,215 @@ int main( void ) {
 	
 	Manipulator manp_1( manp_base_point, manp_angles, manp_link_lengths);
 
-	Point zero;
-	Point one;
-	Point two;
+	Point2f zero;
+	Point2f one;
+	Point2f two;
 	
 	manp_1.getPoints(zero, one, two);
 
-	Point dest;
+	Point2f dest;
 	dest.x = 3*w/4;
 	dest.y = 3*w/4;
 
 	manp_1.FABRIK( graph_window, 2, zero, one, two, dest, graph_image );
-	
-	/*
-	/// Windows names
-	char atom_window[] = "Drawing 1: Atom";
-	char rook_window[] = "Drawing 2: Rook";
-	/// Create black empty images
-	Mat atom_image = Mat::zeros( w, w, CV_8UC3 );
-	Mat rook_image = Mat::zeros( w, w, CV_8UC3 );
-	/// 1. Draw a simple atom:
-	/// -----------------------
-	/// 1.a. Creating ellipses
-	MyEllipse( atom_image, 90 );
-	MyEllipse( atom_image, 0 );
-	MyEllipse( atom_image, 45 );
-	MyEllipse( atom_image, -45 );
-	/// 1.b. Creating circles
-	MyFilledCircle( atom_image, Point( w/2, w/2) );
-	/// 2. Draw a rook
-	/// ------------------
-	/// 2.a. Create a convex polygon
-	MyPolygon( rook_image );
-	/// 2.b. Creating rectangles
-	rectangle( rook_image,
-	Point( 0, 7*w/8 ),
-	Point( w, w),
-	Scalar( 0, 255, 255 ),-1,8 );
-	/// 2.c. Create a few lines
-	MyLine( rook_image, Point( 0, 15*w/16 ), Point( w, 15*w/16 ) );
-	MyLine( rook_image, Point( w/4, 7*w/8 ), Point( w/4, w ) );
-	MyLine( rook_image, Point( w/2, 7*w/8 ), Point( w/2, w ) );
-	MyLine( rook_image, Point( 3*w/4, 7*w/8 ), Point( 3*w/4, w ) );
-	/// 3. Display your stuff!
-	imshow( atom_window, atom_image );
-	moveWindow( atom_window, 0, 200 );
-	imshow( rook_window, rook_image );
-	moveWindow( rook_window, w, 200 );
-	waitKey( 0 );
-	return(0);
-	*/
-	
+
 	imshow(graph_window,graph_image);
 	moveWindow(graph_window, 0, 200 );
 	waitKey(0);
 	return(0);
 	
 }
-/*
-void MyEllipse( Mat img, double angle )
-{
-	int thickness = 2;
-	int lineType = 8;
-	ellipse( img,
-	Point( w/2, w/2 ),
-	Size( w/4, w/16 ),
-	angle,
-	0,
-	360,
-	Scalar( 255, 0, 0 ),
-	thickness,
-	lineType );
-}
-void MyFilledCircle( Mat img, Point center )
-{
-	int thickness = -1;
-	int lineType = 8;
-	circle( img,
-	center,
-	w/32,
-	Scalar( 0, 0, 255 ),
-	thickness,
-	lineType );
+
+//--------------------------------------------------------------------------------------------------
+
+void getLine (Point2f stationary, Point2f moving, float& k, float& b) {	
+	k = (stationary.y - moving.y)/(stationary.x - moving.x);
+	b = (moving.y - k * moving.x);
+	// Check extreme positions
 }
 
-void MyPolygon( Mat img )
-{
-	int lineType = 8;
-	Point rook_points[1][20];
-	rook_points[0][0] = Point( w/4, 7*w/8 );
-	rook_points[0][1] = Point( 3*w/4, 7*w/8 );
-	rook_points[0][2] = Point( 3*w/4, 13*w/16 );
-	rook_points[0][3] = Point( 11*w/16, 13*w/16 );
-	rook_points[0][4] = Point( 19*w/32, 3*w/8 );
-	rook_points[0][5] = Point( 3*w/4, 3*w/8 );
-	rook_points[0][6] = Point( 3*w/4, w/8 );
-	rook_points[0][7] = Point( 26*w/40, w/8 );
-	rook_points[0][8] = Point( 26*w/40, w/4 );
-	rook_points[0][9] = Point( 22*w/40, w/4 );
-	rook_points[0][10] = Point( 22*w/40, w/8 );
-	rook_points[0][11] = Point( 18*w/40, w/8 );
-	rook_points[0][12] = Point( 18*w/40, w/4 );
-	rook_points[0][13] = Point( 14*w/40, w/4 );
-	rook_points[0][14] = Point( 14*w/40, w/8 );
-	rook_points[0][15] = Point( w/4, w/8 );
-	rook_points[0][16] = Point( w/4, 3*w/8 );
-	rook_points[0][17] = Point( 13*w/32, 3*w/8 );
-	rook_points[0][18] = Point( 5*w/16, 13*w/16 );
-	rook_points[0][19] = Point( w/4, 13*w/16 );
-	const Point* ppt[1] = { rook_points[0] };
-	int npt[] = { 20 };
-	fillPoly( img,
-	ppt,
-	npt,
-	1,
-	Scalar( 255, 255, 255 ),
-	lineType );
+void choosePoint (Point2f inter_one, Point2f inter_two, Point2f moving, Point2f& out ) {
+	float eps_one, eps_two;
+
+	eps_one = pow( pow(inter_one.x - moving.x, 2 ) + pow(inter_one.y - moving.y, 2 ), 0.5 );
+	eps_two = pow( pow(inter_two.x - moving.x, 2 ) + pow(inter_two.y - moving.y, 2 ), 0.5 );
+	
+	if ( eps_one > eps_two )
+		out = inter_two;
+	else out = inter_one;
+
 }
 
-void MyLine( Mat img, Point start, Point end )
-{
-	int thickness = 2;
-	int lineType = 8;
-	line( img,
-	start,
-	end,
-	Scalar( 0, 0, 0 ),
-	thickness,
-	lineType );
+int solvePol (float A, float B, float C, std::vector<float>& solution) {
+	float desc;
+
+	desc = pow( B, 2 ) - 4 * A * C; 
+	if (desc < 0) {
+		fprintf( stderr, "Desc < 0 %lf\n", desc );
+		return -1;
+	}
+	solution[0] = (-B + pow( desc, 0.5 ) )/(2*A);
+	solution[1] = (-B - pow( desc, 0.5 ) )/(2*A);
+	return 0;
 }
-*/
+
+int getInterPoint ( float link_length, Point2f stationary, Point2f moving, Point2f& out ) {
+	float k, b, A, B, C;
+	std::vector<float> solution(2);
+	Point2f inter_one, inter_two;
+
+	getLine( stationary, moving, k, b );
+
+	A = pow( k, 2 ) + 1;
+	B = 2*b*k - 2*k*stationary.y - 2*stationary.x;
+	C = pow( b, 2 ) + 2*b*stationary.y + pow( stationary.x, 2 ) + pow( stationary.y, 2) - pow( link_length, 2 );
+	
+	solvePol( A, B, C, solution);
+
+	inter_one.x = solution[0];
+	inter_two.x = solution[1];
+
+	inter_one.y = k*inter_one.x + b;
+	inter_two.y = k*inter_two.x + b;
+
+	choosePoint (inter_one, inter_two, moving, out);
+
+	return 0;
+
+}
+
+void printImg(char* graph_window, Mat graph_image, Point2f zero, Point2f one, Point2f two ) {
+	
+	graph_image.setTo(Scalar(255,255,255));
+
+	line( graph_image, zero, one, Scalar( 0, 0, 0 ), 2, 8 );
+	line( graph_image, one, two, Scalar( 0, 0, 0 ), 2, 8 );
+
+	circle( graph_image, zero, w/200, Scalar( 255, 0, 0 ), -1, 8 );
+	circle( graph_image, one, w/200, Scalar( 0, 0, 255 ), -1, 8 );
+	circle( graph_image, two, w/200, Scalar( 0, 0, 255 ), -1, 8 );
+
+	imshow(graph_window,graph_image);
+	moveWindow(graph_window, 0, 200 );
+	waitKey(0);
+}
+
+//------------------------------------Unit Tests--------------------------------------
+
+int getPoints_test() { 
+	vector<float> base_point(2), angles(2), link_lengths(2);
+
+	Point2f zero, one, two;
+
+        base_point[0] = 3;
+        base_point[1] = 3;
+        angles[0] = M_PI/4;
+        angles[1] = M_PI/6;
+        link_lengths[0] = 1;
+        link_lengths[1] = 3;
+
+	Manipulator test( base_point, angles, link_lengths );
+        test.getPoints(zero, one, two);
+
+        float eps = 1e-6;
+
+        if ( fabs ( zero.x-3 ) > eps ) {
+        	fprintf( stderr, "Wrong zero.x %lf\n", zero.x );
+          	return -1;
+        }
+
+        if ( fabs ( zero.y-3 ) > eps ) {
+        	fprintf( stderr, "Wrong zero.y %lf\n", zero.y );
+        	return -1;
+        }
+	
+	if ( fabs ( one.x-3.7071067811865475 ) > eps ) {
+        	fprintf( stderr, "Wrong one.x %lf\n", one.x );
+        	return -1;
+        }
+	
+	if ( fabs ( one.y-3.7071067811865475 ) > eps ) {
+        	fprintf( stderr, "Wrong one.y %lf\n", one.y );
+        	return -1;
+        }
+
+	if ( fabs ( two.x-6.305182992539864 ) > eps ) {
+        	fprintf( stderr, "Wrong two.x %lf\n", two.x );
+        	return -1;
+        }
+
+	if ( fabs ( two.y-5.207106781186548 ) > eps ) {
+        	fprintf( stderr, "Wrong two.y %lf\n", two.y );
+        	return -1;
+        }
+
+        return 0;
+}	
+
+int getLine_test() {
+	float k,b;
+	Point2f stationary, moving;
+
+	stationary.x = 47;
+	stationary.y = -65;
+	moving.x = 13;
+	moving.y = 80;
+	
+	getLine( stationary, moving, k, b);
+
+	float eps = 1e-6;
+
+	if ( fabs ( k + 4.2647058824 ) > eps ){
+		fprintf( stderr, "Wrong k %lf\n", k);
+		return -1;	
+	}
+
+	if ( fabs ( b - 135.4411764706 ) > eps ){
+		fprintf( stderr, "Wrong b %lf\n", b);
+		return -1;	
+	}
+	return 0;
+}
+
+int choosePoint_test() {
+	Point2f one, two, moving, out;
+
+	one.x = 76;
+	one.y = -8;
+
+	two.x = 0;
+	two.y = -52;
+
+	moving.x = 12;
+	moving.y = 1;
+
+	choosePoint(one, two, moving, out);
+	
+	if (out == one) {
+		fprintf( stderr, "Wrong point chosen: One.\n");
+		return -1;
+	}
+	return 0;
+	
+}
+
+int solvePol_test() {
+	float A = 3, B = -8, C = 2;
+	std::vector<float> solution(2);
+	
+	solvePol( A, B, C, solution );
+	
+	float eps = 1e-6;
+
+	if ( fabs ( solution[0] - 2.3874258867 ) > eps ){
+		fprintf( stderr, "Wrong x1 %lf\n", solution[0]);
+		return -1;	
+	}
+	
+	if ( fabs ( solution[1] - 0.27924078 ) > eps ){
+		fprintf( stderr, "Wrong x2 %lf\n", solution[1]);
+		return -1;	
+	}
+
+	return 0;
+}
