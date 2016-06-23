@@ -8,17 +8,15 @@
 using namespace cv;
 using std::vector;
 
-
-void getLine (float link_length, Point2f stationary, Point2f moving, float& k, float& b);
-void choosePoint (Point2f inter_one, Point2f inter_two, Point2f moving, Point2f& out );
-int solvePol (float A, float B, float C, std::vector<float>& solution);
-int getInterPoint ( float link_length, Point2f one, Point2f two, Point2f& out );
+void getVector (Point2f stationary, Point2f moving, Point2f& vect);
+void normalVector (Point2f& vect);
+void getPoint ( float link_length, Point2f stationary, Point2f moving, Point2f& out );
 void printImg(char* graph_window, Mat graph_image, Point2f zero, Point2f one, Point2f two );
 
 int getPoints_test();
-int choosePoint_test();
-int getLine_test();
-int solvePol_test();
+//int choosePoint_test();
+//int getLine_test();
+//int solvePol_test();
 
 class Manipulator {
 	private:
@@ -61,13 +59,13 @@ class Manipulator {
 				printImg(graph_window, graph_image, zero, one, two );
 			
 				//Moved point ONE for the reverse pass
-				getInterPoint( link_lengths[1], two, one_pv, one );
+				getPoint( link_lengths[1], two, one_pv, one );
 				
 				//Prinring this step
 				printImg(graph_window, graph_image, zero, one, two );
 				
 				//Moved point ZERO for the reverse pass
-				getInterPoint( link_lengths[0], one, zero_pv, zero);
+				getPoint( link_lengths[0], one, zero_pv, zero);
 				
 				//Printing this step
 				printImg(graph_window, graph_image, zero, one, two );
@@ -83,13 +81,13 @@ class Manipulator {
 				printImg(graph_window, graph_image, zero, one, two );
 				
 				//Moved point one for the direct pass
-				getInterPoint( link_lengths[0], zero, one_pv, one );
+				getPoint( link_lengths[0], zero, one_pv, one );
 				
 				//Prinring this step
 				printImg(graph_window, graph_image, zero, one, two );
 				
 				//Moved point two for the direct pass
-				getInterPoint( link_lengths[1], one, two_pv, two );
+				getPoint( link_lengths[1], one, two_pv, two );
 				
 				//Prinring this step
 				printImg(graph_window, graph_image, zero, one, two );
@@ -108,14 +106,14 @@ int main( void ) {
         if(getPoints_test()!=0)
         	return -1;
 
-	if(getLine_test()!=0)
-		return -1;
+	//if(getLine_test()!=0)
+	//	return -1;
 
-	if(choosePoint_test()!=0)
-		return -1;	
+	//if(choosePoint_test()!=0)
+	//	return -1;	
 	
-	if(solvePol_test()!=0)
-		return -1;
+	//if(solvePol_test()!=0)
+	//	return -1;
 
 	std::vector<float> manp_base_point(2);
 	manp_base_point[0] = w/2;
@@ -141,10 +139,10 @@ int main( void ) {
 	manp_1.getPoints(zero, one, two);
 
 	Point2f dest;
-	dest.x = 3*w/4;
-	dest.y = 3*w/4;
+	dest.x = 564;
+	dest.y = 529;
 
-	manp_1.FABRIK( graph_window, 2, zero, one, two, dest, graph_image );
+	manp_1.FABRIK( graph_window, 8, zero, one, two, dest, graph_image );
 
 	imshow(graph_window,graph_image);
 	moveWindow(graph_window, 0, 200 );
@@ -155,59 +153,27 @@ int main( void ) {
 
 //--------------------------------------------------------------------------------------------------
 
-void getLine (Point2f stationary, Point2f moving, float& k, float& b) {	
-	k = (stationary.y - moving.y)/(stationary.x - moving.x);
-	b = (moving.y - k * moving.x);
-	// Check extreme positions
+void getVector (Point2f stationary, Point2f moving, Point2f& vect) {	
+	vect.x = moving.x - stationary.x;
+	vect.y = moving.y - stationary.y;
 }
 
-void choosePoint (Point2f inter_one, Point2f inter_two, Point2f moving, Point2f& out ) {
-	float eps_one, eps_two;
-
-	eps_one = pow( pow(inter_one.x - moving.x, 2 ) + pow(inter_one.y - moving.y, 2 ), 0.5 );
-	eps_two = pow( pow(inter_two.x - moving.x, 2 ) + pow(inter_two.y - moving.y, 2 ), 0.5 );
+void normalVector (Point2f& vect) {
+	float k = pow(pow(vect.x,2) + pow(vect.y,2), 0.5);
 	
-	if ( eps_one > eps_two )
-		out = inter_two;
-	else out = inter_one;
-
+	vect.x /= k;
+	vect.y /= k;
 }
 
-int solvePol (float A, float B, float C, std::vector<float>& solution) {
-	float desc;
+void getPoint ( float link_length, Point2f stationary, Point2f moving, Point2f& out ) {
+	Point2f vect;
 
-	desc = pow( B, 2 ) - 4 * A * C; 
-	if (desc < 0) {
-		fprintf( stderr, "Desc < 0 %lf\n", desc );
-		return -1;
-	}
-	solution[0] = (-B + pow( desc, 0.5 ) )/(2*A);
-	solution[1] = (-B - pow( desc, 0.5 ) )/(2*A);
-	return 0;
-}
+	getVector( stationary, moving, vect );
 
-int getInterPoint ( float link_length, Point2f stationary, Point2f moving, Point2f& out ) {
-	float k, b, A, B, C;
-	std::vector<float> solution(2);
-	Point2f inter_one, inter_two;
-
-	getLine( stationary, moving, k, b );
-
-	A = pow( k, 2 ) + 1;
-	B = 2*b*k - 2*k*stationary.y - 2*stationary.x;
-	C = pow( b, 2 ) + 2*b*stationary.y + pow( stationary.x, 2 ) + pow( stationary.y, 2) - pow( link_length, 2 );
+	normalVector( vect );
 	
-	solvePol( A, B, C, solution);
-
-	inter_one.x = solution[0];
-	inter_two.x = solution[1];
-
-	inter_one.y = k*inter_one.x + b;
-	inter_two.y = k*inter_two.x + b;
-
-	choosePoint (inter_one, inter_two, moving, out);
-
-	return 0;
+	out.x = stationary.x + link_length*vect.x;
+	out.y = stationary.y + link_length*vect.y;
 
 }
 
@@ -223,7 +189,6 @@ void printImg(char* graph_window, Mat graph_image, Point2f zero, Point2f one, Po
 	circle( graph_image, two, w/200, Scalar( 0, 0, 255 ), -1, 8 );
 
 	imshow(graph_window,graph_image);
-	moveWindow(graph_window, 0, 200 );
 	waitKey(0);
 }
 
@@ -279,7 +244,7 @@ int getPoints_test() {
         return 0;
 }	
 
-int getLine_test() {
+/*int getLine_test() {
 	float k,b;
 	Point2f stationary, moving;
 
@@ -345,4 +310,4 @@ int solvePol_test() {
 	}
 
 	return 0;
-}
+}*/
