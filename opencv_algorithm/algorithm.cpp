@@ -13,10 +13,11 @@ void normalVector (Point2f& vect);
 void getPoint ( float link_length, Point2f stationary, Point2f moving, Point2f& out );
 void printImg(char* graph_window, Mat graph_image, Point2f zero, Point2f one, Point2f two );
 
+char graph_window[] = "Graph FABRIK";
+Mat graph_image = Mat(Size(w,w),CV_8UC3,Scalar(255,255,255));
+
 int getPoints_test();
-//int choosePoint_test();
-//int getLine_test();
-//int solvePol_test();
+int getCoordinates_test();
 
 class Manipulator {
 	private:
@@ -30,6 +31,12 @@ class Manipulator {
 			base_point = manp_base_point;
 			angles = manp_angles;
 			link_lengths = manp_link_lengths;
+		}
+
+		void getManipulator( std::vector<float>& manp_base_point, std::vector<float>& manp_angles, std::vector<float>& manp_link_lengths ) {
+			manp_base_point = base_point;
+			manp_angles = angles;
+			manp_link_lengths = link_lengths;
 		}
 
 		void getPoints( Point2f& point_zero, Point2f& point_one, Point2f& point_two ) {	
@@ -48,10 +55,17 @@ class Manipulator {
 			base_point[1] = point_zero.y;
 
 			angles[0] = atan( (point_one.y - point_zero.y)/(point_one.x - point_zero.x) );
-			angles[1] = atan( (point_two.y - point_one.y)/(point_two.x - point_one.x) );				
+			angles[1] = atan( (point_two.y - point_one.y)/(point_two.x - point_one.x) );
+
+			link_lengths[0] = pow(pow((point_one.x - point_zero.x),2) + pow((point_one.y - point_zero.y),2), 0.5);
+			link_lengths[1] = pow(pow((point_two.x - point_one.x),2) + pow((point_two.y - point_one.y),2), 0.5);
 		}
+
+		// !! TO DO: Replace points with vector of points and place them under another cycle
+
+		// !!! TO DO: Change iteration based calculation to delta based (basically for to while)
 		
-		void FABRIK(char* graph_window, int iter, Point2f zero, Point2f one, Point2f two, Point2f dest, Mat graph_image ) {
+		void FABRIK( int iter, Point2f zero, Point2f one, Point2f two, Point2f dest ) {
 			Point2f zero_pv, one_pv, two_pv;
 								
 			for ( int i = 0; i < iter/2; i++ ) {
@@ -107,6 +121,7 @@ class Manipulator {
 };
 
 
+
 int main( void ) {
 
 	//--------Testing-----------
@@ -114,14 +129,8 @@ int main( void ) {
         if(getPoints_test()!=0)
         	return -1;
 
-	//if(getLine_test()!=0)
-	//	return -1;
-
-	//if(choosePoint_test()!=0)
-	//	return -1;	
-	
-	//if(solvePol_test()!=0)
-	//	return -1;
+	if(getCoordinates_test()!=0)
+		return -1;
 
 	std::vector<float> manp_base_point(2);
 	manp_base_point[0] = w/2;
@@ -134,9 +143,6 @@ int main( void ) {
 	std::vector<float> manp_link_lengths(2);
 	manp_link_lengths[0] = w/5;
 	manp_link_lengths[1] = w/5;
-
-	char graph_window[] = "Graph FABRIK";
-	Mat graph_image = Mat(Size(w,w),CV_8UC3,Scalar(255,255,255));
 	
 	Manipulator manp_1( manp_base_point, manp_angles, manp_link_lengths);
 
@@ -150,7 +156,7 @@ int main( void ) {
 	dest.x = 564;
 	dest.y = 529;
 
-	manp_1.FABRIK( graph_window, 8, zero, one, two, dest, graph_image );
+	manp_1.FABRIK(  8, zero, one, two, dest );
 
 	imshow(graph_window,graph_image);
 	moveWindow(graph_window, 0, 200 );
@@ -250,72 +256,64 @@ int getPoints_test() {
         }
 
         return 0;
-}	
-
-/*int getLine_test() {
-	float k,b;
-	Point2f stationary, moving;
-
-	stationary.x = 47;
-	stationary.y = -65;
-	moving.x = 13;
-	moving.y = 80;
-	
-	getLine( stationary, moving, k, b);
-
-	float eps = 1e-6;
-
-	if ( fabs ( k + 4.2647058824 ) > eps ){
-		fprintf( stderr, "Wrong k %lf\n", k);
-		return -1;	
-	}
-
-	if ( fabs ( b - 135.4411764706 ) > eps ){
-		fprintf( stderr, "Wrong b %lf\n", b);
-		return -1;	
-	}
-	return 0;
 }
 
-int choosePoint_test() {
-	Point2f one, two, moving, out;
+int getCoordinates_test() { 
+	Point2f point_zero, point_one, point_two;
 
-	one.x = 76;
-	one.y = -8;
+	std::vector<float> base_point(2), angles(2), link_lengths(2);
 
-	two.x = 0;
-	two.y = -52;
-
-	moving.x = 12;
-	moving.y = 1;
-
-	choosePoint(one, two, moving, out);
-	
-	if (out == one) {
-		fprintf( stderr, "Wrong point chosen: One.\n");
-		return -1;
+	for (int i = 0; i < 2; i++) {
+		base_point[i] = 0;
+		angles[i] = 0;
+		link_lengths[i] = 0;
 	}
-	return 0;
+
+        point_zero.x = 45.3145123;
+	point_zero.y = 523.1465463;
+
+	point_one.x = 798.1368468;
+	point_one.y = 12.462649;
+
+	point_two.x = 43.496793;
+	point_two.y = 1.9646437;
+
+	Manipulator test(base_point, angles, link_lengths);
+        test.getCoordinates(point_zero, point_one, point_two);
+	test.getManipulator(base_point, angles, link_lengths);	
+
+        float eps = 1e-5;
+
+        if ( fabs ( base_point[0] - 45.3145123 ) > eps ) {
+        	fprintf( stderr, "Wrong base_point[0] %le\n", base_point[0] );
+          	return -1;
+        }
+
+        if ( fabs ( base_point[1]-523.1465463 ) > eps ) {
+        	fprintf( stderr, "Wrong base_point[1] %le\n", base_point[1] );
+        	return -1;
+        }
 	
+	if ( fabs ( angles[0] + 0.5960537) > eps ) {
+        	fprintf( stderr, "Wrong angles[0] %le\n", angles[0] );
+        	return -1;
+        }
+	
+	if ( fabs ( angles[1]-0.0139103 ) > eps ) {
+        	fprintf( stderr, "Wrong angles[1] %le\n", angles[1] );
+        	return -1;
+        }
+
+	if ( fabs ( link_lengths[0]-909.6919865 ) > 0.01) {
+        	fprintf( stderr, "Wrong link[0] %le\n", link_lengths[0] );
+        	return -1;
+        }
+	
+	if ( fabs ( link_lengths[1]-754.7130706 ) > 0.01 ) {
+        	fprintf( stderr, "Wrong link[1] %le\n", link_lengths[1] );
+        	return -1;
+        }
+
+
+        return 0;
 }
-
-int solvePol_test() {
-	float A = 3, B = -8, C = 2;
-	std::vector<float> solution(2);
-	
-	solvePol( A, B, C, solution );
-	
-	float eps = 1e-6;
-
-	if ( fabs ( solution[0] - 2.3874258867 ) > eps ){
-		fprintf( stderr, "Wrong x1 %lf\n", solution[0]);
-		return -1;	
-	}
-	
-	if ( fabs ( solution[1] - 0.27924078 ) > eps ){
-		fprintf( stderr, "Wrong x2 %lf\n", solution[1]);
-		return -1;	
-	}
-
-	return 0;
-}*/
