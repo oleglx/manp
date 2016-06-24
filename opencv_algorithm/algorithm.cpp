@@ -64,6 +64,8 @@ class Manipulator {
 		// !! TO DO: Replace points with vector of points and place them under another cycle
 
 		// !!! TO DO: Change iteration based calculation to delta based (basically for to while)
+
+		// !!! TO DO: Place all the helping functions in class
 		
 		void FABRIK( int iter, Point2f zero, Point2f one, Point2f two, Point2f dest ) {
 			Point2f zero_pv, one_pv, two_pv;
