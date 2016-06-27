@@ -199,11 +199,6 @@ void Manipulator::FABRIK( int iter, std::vector<float> dest ) {
 		//Moved point point_two for the direct pass
 		getPoint( link_lengths[2], point_one, two_pv, point_two );
 	}
-
-	//Transforming back to normal coordinate system
-	atransform(point_one, angles[0]);
-	atransform(point_two, angles[0]);
-
 }
 
 void transform(std::vector<float>& vect, float angle) {
@@ -212,11 +207,14 @@ void transform(std::vector<float>& vect, float angle) {
 	vect[2] = vect[2];
 }
 
+/*
 void atransform(std::vector<float>& vect, float angle) {
 	vect[0] = vect[0]*cos(angle) + vect[1]*sin(angle);
 	vect[1] = vect[1]*cos(angle) - vect[0]*sin(angle);
 	vect[2] = vect[2];
 }
+
+*/
 
 bool Manipulator::checkDestination ( std::vector<float> joint_positions  ) {
 	if (joint_positions == angles)
