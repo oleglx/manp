@@ -21,7 +21,9 @@ class Manipulator {
 		
 		void setManipulator( std::vector<float> manp_base_point, std::vector<float> manp_angles, std::vector<float> manp_link_lengths );
 		void getManipulator( std::vector<float>& manp_base_point, std::vector<float>& manp_angles, std::vector<float>& manp_link_lengths );
-		void getPoint ( float link_length, std::vector<float> stationary, std::vector<float> moving, std::vector<float>& out );		
+		void getPoint ( float link_length, std::vector<float> stationary, std::vector<float> moving, std::vector<float>& out );
+		void transform(std::vector<float>& vect, float angle);
+		void atransform(std::vector<float>& vect, float angle);		
 		void FABRIK( int iter, std::vector<float> dest );
 		bool checkDestination ( std::vector<float> joint_positions(3) );
 };
@@ -111,15 +113,12 @@ void Manipulator::updateManipulator() {
 	base_point[0] = point_zero[0];
 	base_point[1] = point_zero[1];
 	base_point[2] = point_zero[2];
-	
-	//Getting world_to_base angle
-	angles[0] = atan( (point_one[1] - point_zero[1])/(point_one[0] - point_zero[0]) );
-	
-	//Getting link1_to_link2 angle
-	angles[1] = atan( (point_one[2] - point_zero[2])/(point_one[1] - point_zero[1]) );
+		
+	//Setting link1_to_link2 angle
+	angles[1] = atan( (point_one[0] - point_zero[0])/(point_one[2] - point_zero[2]) );
 
-	//Getting link2_to_link3 angle
-	angles[2] = atan( (point_two[2] - point_one[2])/(point_two[1] - point_one[1]) );
+	//Setting link2_to_link3 angle
+	angles[2] = atan( (point_two[0] - point_one[0])/(point_two[2] - point_one[2]) );
 }
 
 
@@ -132,13 +131,13 @@ void Manipulator::setManipulator( std::vector<float> manp_base_point, std::vecto
 	point_zero[1] = base_point[1];
 	point_zero[2] = base_point[2];
 	
-	point_one[0] = base_point[0] + link_lengths[1]*sin(angles[0])*cos(angles[1]);
-	point_one[1] = base_point[1] + link_lengths[1]*cos(angles[0])*cos(angles[1]);
-	point_one[2] = base_point[2] + link_lengths[1]*sin(angles[0]);
+	point_one[0] = base_point[0] + link_lengths[1]*cos(angles[0])*sin(angles[1]);
+	point_one[1] = base_point[1] + link_lengths[1]*sin(angles[0])*sin(angles[1]);
+	point_one[2] = base_point[2] + link_lengths[1]*cos(angles[1]);
 
-	point_two[0] = point_one[0] + link_lengths[1]*sin(angles[0])*cos(angles[2]);	
-	point_two[1] = point_one[1] + link_lengths[1]*cos(angles[0])*cos(angles[2]);
-	point_two[2] = point_one[2] + link_lengths[1]*sin(angles[0]);
+	point_two[0] = point_one[0] + link_lengths[1]*cos(angles[0])*sin(angles[2]);	
+	point_two[1] = point_one[1] + link_lengths[1]*sin(angles[0])*sin(angles[2]);
+	point_two[2] = point_one[2] + link_lengths[1]*cos(angles[2]);
 }
 
 void Manipulator::getManipulator( std::vector<float>& manp_base_point, std::vector<float>& manp_angles, std::vector<float>& manp_link_lengths ) {
@@ -162,11 +161,28 @@ void Manipulator::getPoint ( float link_length, std::vector<float> stationary, s
 	out[2] = stationary[2] + link_length*vect[1];
 }
 
+void Manipulator::transform(std::vector<float>& vect, float angle) {
+	vect[0] = vect[0]*cos(angle) - vect[1]*sin(angle);
+	vect[1] = vect[0]*sin(angle) + vect[1]*cos(angle);
+	vect[2] = vect[2];
+}
+
+
+void Manipulator::atransform(std::vector<float>& vect, float angle) {
+	vect[0] = vect[0]*cos(angle) + vect[1]*sin(angle);
+	vect[1] = vect[1]*cos(angle) - vect[0]*sin(angle);
+	vect[2] = vect[2];
+}
+
 void Manipulator::FABRIK( int iter, std::vector<float> dest ) {
 	std::vector<float> zero_pv, one_pv, two_pv;
 
-	angles[0] = atan( (point_one[1] - point_zero[1])/(point_one[0] - point_zero[0]) );
+	angles[0] = atan( (dest[1] - point_zero[1])/(dest[0] - point_zero[0]) );
 	
+	//Rotating vectors to destination
+	transform(point_one, angles[0]);
+	transform(point_two, angles[0]);
+
 	//Transforming to another coordinate system
 	transform(point_one, angles[0]);
 	transform(point_two, angles[0]);
@@ -199,22 +215,10 @@ void Manipulator::FABRIK( int iter, std::vector<float> dest ) {
 		//Moved point point_two for the direct pass
 		getPoint( link_lengths[2], point_one, two_pv, point_two );
 	}
+	//Transforming to basic coordinate system
+	atransform(point_one, angles[0]);
+	atransform(point_two, angles[0]);
 }
-
-void transform(std::vector<float>& vect, float angle) {
-	vect[0] = vect[0]*cos(angle) - vect[1]*sin(angle);
-	vect[1] = vect[0]*sin(angle) + vect[1]*cos(angle);
-	vect[2] = vect[2];
-}
-
-/*
-void atransform(std::vector<float>& vect, float angle) {
-	vect[0] = vect[0]*cos(angle) + vect[1]*sin(angle);
-	vect[1] = vect[1]*cos(angle) - vect[0]*sin(angle);
-	vect[2] = vect[2];
-}
-
-*/
 
 bool Manipulator::checkDestination ( std::vector<float> joint_positions  ) {
 	if (joint_positions == angles)
