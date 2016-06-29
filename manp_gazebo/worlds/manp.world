@@ -1,11 +1,19 @@
 <?xml version="1.0" ?>
 <sdf version="1.4">
-  <world name="default">
-    <include>
-      <uri>model://ground_plane</uri>
-    </include>
-    <include>
-      <uri>model://sun</uri>
-    </include>
-  </world>
+	<world name="default">
+		<include>
+			<uri>model://ground_plane</uri>
+		</include>
+		<include>
+			<uri>model://sun</uri>
+		</include>
+		<physics type="ode">
+			<max_step_size>0.0001</max_step_size>
+		</physics>
+		<gui>
+			<camera name="user_camera">
+				<pose>-20 0 5 0 0 0</pose>
+			</camera>
+		</gui>
+	</world>
 </sdf>

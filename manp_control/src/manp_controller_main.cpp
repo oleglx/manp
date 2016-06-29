@@ -103,7 +103,7 @@ int main( int argc, char **argv ) {
 	Manipulator model(base_point, joint_positions, link_lengths);
 	pv_joint_positions = joint_positions;
 
-	/*fprintf(stderr, "------------Constructor-------------- \n");
+	fprintf(stderr, "------------Constructor-------------- \n");
 	fprintf(stderr, "point_two[0] %lf\n", model.point_two[0]);
 	fprintf(stderr, "point_two[1] %lf\n", model.point_two[1]);
 	fprintf(stderr, "point_two[2] %lf\n", model.point_two[2]);
@@ -113,11 +113,11 @@ int main( int argc, char **argv ) {
 	fprintf(stderr, "point_zero[0] %lf\n", model.point_zero[0]);
 	fprintf(stderr, "point_zero[1] %lf\n", model.point_zero[1]);
 	fprintf(stderr, "point_zero[2] %lf\n", model.point_zero[2]);
-	fprintf(stderr, "-------------------------------- \n");*/
+	fprintf(stderr, "-------------------------------- \n");
 
 	model.FABRIK(10, destination);
 
-	/*fprintf(stderr, "------------FABRIK-------------- \n");
+	fprintf(stderr, "------------FABRIK-------------- \n");
 	fprintf(stderr, "point_two[0] %lf\n", model.point_two[0]);
 	fprintf(stderr, "point_two[1] %lf\n", model.point_two[1]);
 	fprintf(stderr, "point_two[2] %lf\n", model.point_two[2]);
@@ -127,7 +127,10 @@ int main( int argc, char **argv ) {
 	fprintf(stderr, "point_zero[0] %lf\n", model.point_zero[0]);
 	fprintf(stderr, "point_zero[1] %lf\n", model.point_zero[1]);
 	fprintf(stderr, "point_zero[2] %lf\n", model.point_zero[2]);
-	fprintf(stderr, "-------------------------------- \n");*/
+	fprintf(stderr, "angles[0] %lf\n", model.angles[0]);
+	fprintf(stderr, "angles[1] %lf\n", model.angles[1]);
+	fprintf(stderr, "angles[2] %lf\n", model.angles[2]);
+	fprintf(stderr, "-------------------------------- \n");
 
 	r.sleep();
 	while(ros::ok() & model.checkDestination(joint_positions) == false ) {
@@ -164,11 +167,11 @@ void Manipulator::updateManipulator() {
 	base_point[2] = point_zero[2];
 
 	//Setting world_to_base angle
-	if (point_one[1] == 0 & point_one[0] == 0) {
+	if (point_two[1] == 0 & point_two[0] == 0) {
 		angles[0] = 0;
 	}
 	else {
-		angles[0] = atan( (point_one[1] - point_zero[1])/(point_one[0] - point_zero[0]) );
+		angles[0] = atan( (point_two[1] - point_zero[1])/(point_two[0] - point_zero[0]) );
 	}
 	
 		
@@ -216,26 +219,29 @@ void Manipulator::getPoint ( float link_length, std::vector<float> stationary, s
 	vect[0] /= k;
 	vect[1] /= k;
 	
-	out[1] = stationary[0] + link_length*vect[0];
+	out[0] = stationary[0] + link_length*vect[0];
 	out[2] = stationary[2] + link_length*vect[1];
 }
 
 void Manipulator::transform(std::vector<float>& vect, float angle) {
-	vect[0] = vect[0]*cos(angle) - vect[1]*sin(angle);
+	double tmp_v0 = vect[0]*cos(angle) - vect[1]*sin(angle);
 	vect[1] = vect[0]*sin(angle) + vect[1]*cos(angle);
+        vect[0] = tmp_v0;
 	vect[2] = vect[2];
 }
 
 
 void Manipulator::atransform(std::vector<float>& vect, float angle) {
-	vect[0] = vect[0]*cos(angle) + vect[1]*sin(angle);
+	double tmp_v0 = vect[0]*cos(angle) + vect[1]*sin(angle);
 	vect[1] = vect[1]*cos(angle) - vect[0]*sin(angle);
+        vect[0] = tmp_v0;
 	vect[2] = vect[2];
 }
 
 void Manipulator::FABRIK( int iter, std::vector<float> dest ) {
 	std::vector<float> zero_pv(3), one_pv(3), two_pv(3);
 	float rot_angle;
+	float l1,l2;
 	
 	//Check for the starting position
 	if (point_one[0] == 0 & point_two[1] == 0) {
@@ -252,7 +258,7 @@ void Manipulator::FABRIK( int iter, std::vector<float> dest ) {
 	//Transforming to another coordinate system
 	transform(point_one, rot_angle);
 	transform(point_two, rot_angle);
-	     
+	transform(dest, rot_angle);
 
 	//----------------ATTENTION-------------------------				
 	//SOLUTION NOW IS IN THE LOCAL SYSTEM OF COORDINATES
@@ -264,7 +270,8 @@ void Manipulator::FABRIK( int iter, std::vector<float> dest ) {
 		two_pv = point_two;
 
 		//Moved point TWO to destination
-		point_two = dest;
+		point_two[0] = dest[0];
+		point_two[2] = dest[2];
 			
 		//Moved point ONE for the reverse pass
 		getPoint( link_lengths[2], point_two, one_pv, point_one );
@@ -285,14 +292,51 @@ void Manipulator::FABRIK( int iter, std::vector<float> dest ) {
 		//Moved point point_two for the direct pass
 		getPoint( link_lengths[2], point_one, two_pv, point_two );
 	}
-	      
+
+	fprintf(stderr, "------------Local Solved-------- \n");
+	fprintf(stderr, "point_two[0] %lf\n", point_two[0]);
+	fprintf(stderr, "point_two[1] %lf\n", point_two[1]);
+	fprintf(stderr, "point_two[2] %lf\n", point_two[2]);
+	fprintf(stderr, "point_one[0] %lf\n", point_one[0]);
+	fprintf(stderr, "point_one[1] %lf\n", point_one[1]);
+	fprintf(stderr, "point_one[2] %lf\n", point_one[2]);
+	fprintf(stderr, "point_zero[0] %lf\n", point_zero[0]);
+	fprintf(stderr, "point_zero[1] %lf\n", point_zero[1]);
+	fprintf(stderr, "point_zero[2] %lf\n", point_zero[2]);
+	fprintf(stderr, "-------------------------------- \n");
+	
+	//Link check
+	l1 = pow( pow( point_one[0] - point_zero[0] ,2) + pow( point_one[1] - point_zero[1] ,2) + pow( point_one[2] - point_zero[2] ,2) , 0.5 );
+	l2 = pow( pow( point_two[0] - point_one[0] ,2) + pow( point_two[1] - point_one[1] ,2) + pow( point_two[2] - point_one[2] ,2) , 0.5 );
+
+	if (fabs(l1 - link_lengths[1])>1e-3 || fabs(l2- link_lengths[2])>1e-3)
+		fprintf(stderr, "links length error (local) \n");      
 
 	//Transforming to basic coordinate system
-	atransform(point_one, rot_angle);
-	atransform(point_two, rot_angle);
+	transform(point_one, rot_angle);
+	transform(point_two, rot_angle);
 
 	//----------------ATTENTION-------------------------				
 	//SOLUTION NOW IS IN THE GLOBAL SYSTEM OF COORDINATES
+
+	fprintf(stderr, "------------Global Solved-------- \n");
+	fprintf(stderr, "point_two[0] %lf\n", point_two[0]);
+	fprintf(stderr, "point_two[1] %lf\n", point_two[1]);
+	fprintf(stderr, "point_two[2] %lf\n", point_two[2]);
+	fprintf(stderr, "point_one[0] %lf\n", point_one[0]);
+	fprintf(stderr, "point_one[1] %lf\n", point_one[1]);
+	fprintf(stderr, "point_one[2] %lf\n", point_one[2]);
+	fprintf(stderr, "point_zero[0] %lf\n", point_zero[0]);
+	fprintf(stderr, "point_zero[1] %lf\n", point_zero[1]);
+	fprintf(stderr, "point_zero[2] %lf\n", point_zero[2]);
+	fprintf(stderr, "-------------------------------- \n");
+	
+	//Link check
+	l1 = pow( pow( point_one[0] - point_zero[0] ,2) + pow( point_one[1] - point_zero[1] ,2) + pow( point_one[2] - point_zero[2] ,2) , 0.5 );
+	l2 = pow( pow( point_two[0] - point_one[0] ,2) + pow( point_two[1] - point_one[1] ,2) + pow( point_two[2] - point_one[2] ,2) , 0.5 );
+
+	if (fabs(l1 - link_lengths[1])>1e-3 || fabs(l2- link_lengths[2])>1e-3 )
+		fprintf(stderr, "links length error (global) %lf %lf \n", l1, l2);
 
 	updateManipulator();
 }
@@ -302,15 +346,19 @@ bool Manipulator::checkDestination ( std::vector<float> joint_positions  ) {
 }
 
 void Manipulator::controlSynth (std::vector<float> pv_joint_positions, std::vector<float> joint_positions, std::vector<float>& control ) {
-	float p = 500, in = 200, d = 200;
-	for (int i = 0; i < 3; i++) {
-		control[i] = p*(angles[i] - joint_positions[i]) + in*(2*angles[i] - joint_positions[i] - pv_joint_positions[i]) + d*(joint_positions[i] - pv_joint_positions[i]);
+	float p = 2;
+	std::vector<float> stat_moments(2);
+	control[0] = p*(angles[0] - joint_positions[0]);
+	for (int i = 1; i < 3; i++) {
+		stat_moments[i-1] = 3200*sin(joint_positions[i]);
+		control[i] = p*(angles[i] - joint_positions[i]) + stat_moments[i-1];
 	}
 	fprintf(stderr, "-------------------------------- \n");
 	//fprintf(stderr, "control 0 %lf\n", control[0]);
 	//fprintf(stderr, "control 1 %lf\n", control[1]);
-	fprintf(stderr, "angles 2 %lf\n", angles[2]);
-	fprintf(stderr, "joint 2 %e\n", joint_positions[2]);
-	fprintf(stderr, "control 2 %lf\n", control[2]);
+	fprintf(stderr, "angles 2: %lf\n", angles[2]);
+	fprintf(stderr, "joint 2: %e\n", joint_positions[2]);
+	fprintf(stderr, "stat_moment 2: %e\n", stat_moments[1]);
+	fprintf(stderr, "control 2: %lf\n", control[2]);
 	fprintf(stderr, "-------------------------------- \n");
 }
