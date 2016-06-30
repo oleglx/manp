@@ -102,11 +102,11 @@
 
 <!-- Joints -->
 	
-	<joint name="world_to_base" type="continuous">
+	<joint name="world_to_base" type="fixed">
 		<parent link="world"/>
 		<child link="base_link"/>
 		<origin xyz="0 0 0"/>
-		<axis xyz="0 0 1"/>
+		<!-- <axis xyz="0 0 1"/>-->
 	</joint>
 	
 	<joint name="base_to_link1" type="fixed">
@@ -126,7 +126,7 @@
 	<joint name="link2_to_link3" type="continuous">
 		<parent link="link2"/>
 		<child link="link3"/>
-		<origin xyz="0 ${width} ${height-0.5}"/>
+		<origin xyz="0 ${width} ${height-0.5}" rpy="0 1 0"/>
 		<axis xyz="0 1 0"/>
 	</joint>
 
@@ -134,7 +134,7 @@
 
 <!-- Transmissions -->
 
-	<transmission name="world_to_base">
+	<!--<transmission name="world_to_base">
 		<type>transmission_interface/SimpleTransmission</type>
     		<joint name="world_to_base">
       			<hardwareInterface>EffortJointInterface</hardwareInterface>
@@ -143,7 +143,7 @@
       			<mechanicalReduction>1</mechanicalReduction>
       			<hardwareInterface>EffortJointInterface</hardwareInterface>
     		</actuator>
-  	</transmission>
+  	</transmission> -->
 
 	<transmission name="link1_to_link2">
 		<type>transmission_interface/SimpleTransmission</type>
@@ -177,20 +177,14 @@
 
 	<gazebo reference="link1">
     		<selfCollide>true</selfCollide>
-		<mu1>0.2</mu1>
-   		<mu2>0.2</mu2>
 	</gazebo>
 	
 	<gazebo reference="link2">
     		<selfCollide>true</selfCollide>
-		<mu1>0.2</mu1>
-    		<mu2>0.2</mu2>
 	</gazebo>
 
 	<gazebo reference="link3">
     		<selfCollide>true</selfCollide>
-		<mu1>0.2</mu1>
-    		<mu2>0.2</mu2>
 	</gazebo>
 
 <!-- ################################# -->
