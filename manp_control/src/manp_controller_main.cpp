@@ -9,62 +9,84 @@
 
 #define PI 3.1415926535
 
-std::vector<float> joint_positions(3), joint_efforts(3);
-std::vector<float> link_lengths(3), base_point(3), destination(3);
-int full_test();
-int getPoint_test();
-void getPoint ( float link_length, std::vector<float> stationary, std::vector<float> moving, std::vector<float>& out );
+//FILE* f;
 
-FILE* f;
+/*Configuration arrays consist of:
+	[0]-base point coordinates;
+	[1]-link lengths
+	[2]-joint angles
+*/
+
+std::vector<std::vector<float> > start_configuration(3, std::vector<float> (3));
+std::vector<float> destination(3);
+std::vector<float> joint_positions(3), joint_efforts(3);
+
+//void getPoint ( float link_length, std::vector<float> stationary, std::vector<float> moving, std::vector<float>& out );
+
+//Unit tests
+int unitTestsBody();
+//int getPoint_test();
+
 
 class Manipulator {
 	private:
-		std::vector<float> base_point, angles, link_lengths;
+		std::vector<std::vector<float> > configuration;
+		
 	public:
-		std::vector<float> point_zero, point_one, point_two;
-		void updateManipulator();
-		
-		Manipulator( std::vector<float> manp_base_point, std::vector<float> manp_angles, std::vector<float> manp_link_lengths ) : base_point(3), angles(3), link_lengths(3), point_zero(3), point_one(3), point_two(3) { 
-
-			setManipulator( manp_base_point, manp_angles, manp_link_lengths );		
+		std::vector<std::vector<float> > points;
+		Manipulator( std::vector<std::vector<float> > manp_configuration ) : configuration(3, std::vector<float> (3)), points(3, std::vector<float> (3)) {
+			setManipulator( manp_configuration );		
 		}
-		
-		void setManipulator( std::vector<float> manp_base_point, std::vector<float> manp_angles, std::vector<float> manp_link_lengths );
-		void getAngles( std::vector<float>& manp_angles);
-		void getManipulator( std::vector<float>& manp_base_point, std::vector<float>& manp_angles, std::vector<float>& manp_link_lengths );
-		void transform(std::vector<float>& vect, float angle);
-		void atransform(std::vector<float>& vect, float angle);		
-		void FABRIK( int iter, std::vector<float> dest );
-		bool checkDestination ( std::vector<float> joint_positions );
-		void controlSynth (std::vector<float> pv_joint_positions, std::vector<float> joint_positions, std::vector<float>& control );
+		//Working as planned
+		void setManipulator( std::vector<std::vector<float> > manp_configuration );
+		//Working as planned
+		void getManipulatorPoints( std::vector<std::vector<float> >& out_points );
+		//
+		//void getManipulatorConfiguration( std::vector<std::vector<float> >& out_data );
+		//		
+		//void updateManipulator();
+		//
+		//void transform(std::vector<float>& vect, float angle);
+		//
+		//void atransform(std::vector<float>& vect, float angle);
+		//
+		//void getRotAngle(std::vector<float> dest, std::vector<float>& rot_angle );
+		//void FABRIK( int iter, std::vector<float> dest );
+		//bool checkDestination ( std::vector<float> joint_positions );
+		//void controlSynth (std::vector<float> pv_joint_positions, std::vector<float> joint_positions, std::vector<float>& control );
 };
 
 int initialize_globals(){  
-	base_point[0] = 0;
-	base_point[1] = 0;
-	base_point[2] = 0;
+	start_configuration[0][0] = 0;
+	start_configuration[0][1] = 0;
+	start_configuration[0][2] = 0;
 
-	link_lengths[0] = 0;
-	link_lengths[1] = 4;
-	link_lengths[2] = 4;
+	start_configuration[1][0] = 0;
+	start_configuration[1][1] = 4;
+	start_configuration[1][2] = 4;
+
+	start_configuration[2][0] = 0;
+	start_configuration[2][1] = 0;
+	start_configuration[2][2] = 1;
 
 	destination[0] = 2;
 	destination[1] = 1;
 	destination[2] = 6;
 }
 
-void joints_callback( const sensor_msgs::JointState::ConstPtr& inp_msg ) {
+//Working as planned
+/*void joints_callback( const sensor_msgs::JointState::ConstPtr& inp_msg ) {
 	std::vector<std::string>::const_iterator it1;
 
-	//it1 = find(inp_msg->name.begin(),inp_msg->name.end(),"world_to_base");
-	//if (it1==inp_msg->name.end()) {
-	//	fprintf(stderr, "world_to_base not found \n");
-	//}
-	//else {
-	//	joint_positions[0] = inp_msg->position[it1 - inp_msg->name.begin()];
+	it1 = find(inp_msg->name.begin(),inp_msg->name.end(),"world_to_base");
+	if (it1==inp_msg->name.end()) {
+		fprintf(stderr, "world_to_base not found \n");
+	}
+	else {
+		joint_positions[0] = inp_msg->position[it1 - inp_msg->name.begin()];
                 
-	//	joint_efforts[0] = inp_msg->effort[it1 - inp_msg->name.begin()];
-	//}
+		joint_efforts[0] = inp_msg->effort[it1 - inp_msg->name.begin()];
+	}
 
 	it1 = find(inp_msg->name.begin(),inp_msg->name.end(),"link1_to_link2");
 	if (it1==inp_msg->name.end()) {
@@ -83,47 +105,41 @@ void joints_callback( const sensor_msgs::JointState::ConstPtr& inp_msg ) {
 		joint_positions[2] = inp_msg->position[it1 - inp_msg->name.begin()];
                 joint_efforts[2] = inp_msg->effort[it1 - inp_msg->name.begin()];
 	}
-}
+}*/
 
 //----------------------------------------------------------
 //-----------------MAIN FUNCTION----------------------------
 //----------------------------------------------------------
 
 int main( int argc, char **argv ) {
-	std::vector<float> control(3), start_angles(3), test_angles(3);
-	std::vector<float> pv_joint_positions(3);
 
-	//full_test();
+	unitTestsBody();
 	//getPoint_test();
 
-	f = fopen("/home/pal/catkin_ws/logfile", "wt");
+	/*f = fopen("/home/pal/catkin_ws/logfile", "wt");
 	if (f == 0) {
 		fprintf(stderr, "File not found \n");
-	}
-
-	start_angles[0] = 0;
-	start_angles[1] = 0;
-	start_angles[2] = 1;
+	}*/
 	
-	initialize_globals();	
+	//initialize_globals();	
 	
-	ros::Publisher wtb_pub, l1tl2_pub, l2tl3_pub;
+	/*ros::Publisher wtb_pub, l1tl2_pub, l2tl3_pub;
 
 	ros::init(argc, argv, "manp_controller");
 
 	ros::NodeHandle n;
-	//wtb_pub = n.advertise<std_msgs::Float64>("/manp/world_to_base_state_controller/command", 100);
+	wtb_pub = n.advertise<std_msgs::Float64>("/manp/world_to_base_state_controller/command", 100);
 	l1tl2_pub = n.advertise<std_msgs::Float64>("/manp/link1_to_link2_state_controller/command", 100);
 	l2tl3_pub = n.advertise<std_msgs::Float64>("/manp/link2_to_link3_state_controller/command", 100);
 
 	ros::Subscriber sub_coordinates = n.subscribe("/manp/joint_states", 100, joints_callback);
 	ros::Rate r(100);
-	ros::spinOnce();
+	ros::spinOnce();*/
 	
-	Manipulator model(base_point, start_angles, link_lengths);
-	pv_joint_positions = joint_positions;
+	//Manipulator model(base_point, start_angles, link_lengths);
+	//pv_joint_positions = joint_positions;
 
-	fprintf(stderr, "------------Constructor-------------- \n");
+	/*fprintf(stderr, "------------Constructor-------------- \n");
 	fprintf(stderr, "point_two[0] %lf\n", model.point_two[0]);
 	fprintf(stderr, "point_two[1] %lf\n", model.point_two[1]);
 	fprintf(stderr, "point_two[2] %lf\n", model.point_two[2]);
@@ -175,7 +191,7 @@ int main( int argc, char **argv ) {
     		
     		r.sleep();
   	}
-	fclose(f);
+	fclose(f);*/
   	return 0;
 }
 
@@ -183,6 +199,25 @@ int main( int argc, char **argv ) {
 //-----------------Defining functions-----------------------
 //----------------------------------------------------------
 
+void Manipulator::setManipulator( std::vector<std::vector<float> > manp_configuration ) {
+
+	configuration = manp_configuration;
+
+	points[0] = configuration[0]; 
+	
+	for (int i = 0; i < 2; i++) {
+
+		points[i+1][0] = points[i][0] + configuration[1][i+1]*cos(configuration[2][0])*sin(configuration[2][i+1]);
+		points[i+1][1] = points[i][1] + configuration[1][i+1]*sin(configuration[2][0])*sin(configuration[2][i+1]);
+		points[i+1][2] = points[i][2] + configuration[1][i+1]*cos(configuration[2][i+1]);
+	}
+}
+
+void Manipulator::getManipulatorPoints( std::vector<std::vector<float> >& out_points ) {
+	out_points = points;
+}
+
+/*
 
 void Manipulator::updateManipulator() {
 	base_point[0] = point_zero[0];
@@ -203,36 +238,6 @@ void Manipulator::updateManipulator() {
 
 	//Setting link2_to_link3 angle
 	angles[2] = acos( (point_two[2] - point_one[2])/link_lengths[2]);
-}
-
-//Working as planned
-void Manipulator::setManipulator( std::vector<float> manp_base_point, std::vector<float> manp_angles, std::vector<float> manp_link_lengths ) {
-
-	base_point = manp_base_point;
-	angles = manp_angles;
-	link_lengths = manp_link_lengths;
-
-	point_zero[0] = base_point[0];
-	point_zero[1] = base_point[1];
-	point_zero[2] = base_point[2];
-	
-	point_one[0] = base_point[0] + link_lengths[1]*cos(angles[0])*sin(angles[1]);
-	point_one[1] = base_point[1] + link_lengths[1]*sin(angles[0])*sin(angles[1]);
-	point_one[2] = base_point[2] + link_lengths[1]*cos(angles[1]);
-
-	point_two[0] = point_one[0] + link_lengths[2]*cos(angles[0])*sin(angles[2]);	
-	point_two[1] = point_one[1] + link_lengths[2]*sin(angles[0])*sin(angles[2]);
-	point_two[2] = point_one[2] + link_lengths[2]*cos(angles[2]);
-}
-
-void Manipulator::getManipulator( std::vector<float>& manp_base_point, std::vector<float>& manp_angles, std::vector<float>& manp_link_lengths ) {
-	manp_base_point = base_point;
-	manp_angles = angles;
-	manp_link_lengths = link_lengths;
-}
-
-void Manipulator::getAngles( std::vector<float>& manp_angles ) {
-	manp_angles = angles;
 }
 
 void getPoint ( float link_length, std::vector<float> stationary, std::vector<float> moving, std::vector<float>& out ) {
@@ -271,12 +276,7 @@ void Manipulator::atransform(std::vector<float>& vect, float angle) {
 	vect[2] = vect[2];
 }
 
-void Manipulator::FABRIK( int iter, std::vector<float> dest ) {
-	std::vector<float> zero_pv(3), one_pv(3), two_pv(3);
-	float rot_angle;
-	float l1,l2;
-	
-	//Check for the starting position
+void Manipulator::getRotAngle(std::vector<float> dest, std::vector<float>& rot_angle) {
 	if (point_two[0] == 0) {
 		rot_angle = acos( dest[1]*point_two[1]/ ( (link_lengths[1]*sin(angles[1]) + link_lengths[2]*sin(angles[2]))*pow( pow( dest[0], 2) + pow(dest[1],2), 0.5 ) ) );	
 	}
@@ -286,7 +286,15 @@ void Manipulator::FABRIK( int iter, std::vector<float> dest ) {
 	if (point_two[0] != 0 & point_two[1] != 0) {
 		rot_angle = acos( (point_two[0]*dest[0] + point_two[1]*dest[1])/ ( (link_lengths[1]*sin(angles[1]) + link_lengths[2]*sin(angles[2]))*pow( pow(dest[0],2) + pow(dest[1],2), 0.5 )) );
 	}
+}
 
+void Manipulator::FABRIK( int iter, std::vector<float> dest ) {
+	std::vector<float> zero_pv(3), one_pv(3), two_pv(3);
+	float rot_angle;
+	float l1,l2;
+	
+	//Check for the starting position
+	void getRotAngle( dest, rot_angle );	
 	fprintf(stderr, "rot_angle %lf\n", rot_angle);
 	      
 	//Rotating vectors to destination
@@ -402,6 +410,7 @@ void Manipulator::controlSynth (std::vector<float> pv_joint_positions, std::vect
 	stat_moments[1] = -3400*sin(joint_positions[1]+joint_positions[2]);
 	control[1] = p*(angles[1] - joint_positions[1]) + stat_moments[0];
 	control[2] = p*(angles[2] - joint_positions[2]-joint_positions[1]) + stat_moments[1];
+	
 	//fprintf(stderr, "-------------------------------- \n");
 	//fprintf(stderr, "control 0 %lf\n", control[0]);
 	//fprintf(stderr, "control 1 %lf\n", control[1]);
@@ -412,111 +421,130 @@ void Manipulator::controlSynth (std::vector<float> pv_joint_positions, std::vect
 	fprintf(f, "%lf;", angles[1]);
 	fprintf(f, "%lf;", angles[0]);
 	fprintf(f, "%lf;\n", control[2]);
-	
 	//fprintf(stderr, "-------------------------------- \n");
 }
-
+*/
 //----------------------------------------------------------
 //---------------------Unit tests---------------------------
 //----------------------------------------------------------
 
-int full_test() {
-	std::vector<float> manp_base_point(3), manp_angles(3), manp_link_lengths(3), test_dest(3);
-	
-	test_dest[0] = 0.5;
-	test_dest[1] = 0.2;
-	test_dest[2] = 0.3;
-	
+
+int unitTestsBody() {
+	std::vector<std::vector<float> > start_configuration(3, std::vector<float> (3));
+	std::vector<std::vector<float> > out_points(3, std::vector<float> (3));
+
 	//Constructing test1
 
-	manp_base_point[0] = 0;
-	manp_base_point[1] = 0;
-	manp_base_point[2] = 0;	
+	start_configuration[0][0] = 0;
+	start_configuration[0][1] = 0;
+	start_configuration[0][2] = 0;	
 	
-	manp_angles[0] = PI/2;
-	manp_angles[1] = PI/4;
-	manp_angles[2] = PI/3;
+	start_configuration[1][0] = 0;
+	start_configuration[1][1] = 1;
+	start_configuration[1][2] = 1;	
 	
-	manp_link_lengths[0] = 0;
-	manp_link_lengths[1] = 1;
-	manp_link_lengths[2] = 1;	
+	start_configuration[2][0] = PI/2;
+	start_configuration[2][1] = PI/4;
+	start_configuration[2][2] = PI/3;
 	
-	Manipulator test1( manp_base_point, manp_angles, manp_link_lengths );
+	Manipulator test1( start_configuration );
+
+	test1.getManipulatorPoints( out_points );
 
 	//Testing setManipulator
-	if (fabs(test1.point_zero[0] - 0) > 1e-6 || fabs(test1.point_zero[1] - 0) > 1e-6 || fabs(test1.point_zero[2] - 0) > 1e-6 )
-		fprintf(stderr, "Test1: Wrong point_zero: %e %e %e \n", test1.point_zero[0], test1.point_zero[1], test1.point_zero[2]);
+	if (fabs(out_points[0][0] - 0) > 1e-6 || fabs(out_points[0][1] - 0) > 1e-6 || fabs(out_points[0][2] - 0) > 1e-6 ) {
+		fprintf(stderr, "Test1: Wrong points[0]: %e %e %e \n", out_points[0][0], out_points[0][1], out_points[0][2]);
+		return -1;
+	}
 	
-	if (fabs(test1.point_one[0] - 0) > 1e-6 || fabs(test1.point_one[1] - 0.7071067811865476) > 1e-6 || fabs(test1.point_one[2] - 0.7071067811865476) > 1e-6 )
-		fprintf(stderr, "Test1: Wrong point_one: %e %e %e \n", test1.point_one[0], test1.point_one[1], test1.point_one[2]);
-	
-	if (fabs(test1.point_two[0] - 0) > 1e-6 || fabs(test1.point_two[1] - 1.5731321849709863)  > 1e-6 || fabs(test1.point_two[2] - 1.2071067811865475) > 1e-6 )
-		fprintf(stderr, "Test1: Wrong point_two: %e %e %e \n", test1.point_two[0], test1.point_two[1], test1.point_two[2]);	
+	if (fabs(out_points[1][0] - 0) > 1e-6 || fabs(out_points[1][1] - 0.7071067811865476) > 1e-6 || fabs(out_points[1][2] - 0.7071067811865476) > 1e-6 ) {
+		fprintf(stderr, "Test1: Wrong points[1]: %e %e %e \n", out_points[1][0], out_points[1][1], out_points[1][2]);
+		return -1;
+	}	
 
-	fprintf(stderr, "FABRIK test1 \n");
-	test1.FABRIK(10, test_dest);	
+	if (fabs(out_points[2][0] - 0) > 1e-6 || fabs(out_points[2][1] - 1.5731321849709863)  > 1e-6 || fabs(out_points[2][2] - 1.2071067811865475) > 1e-6 ) {
+		fprintf(stderr, "Test1: Wrong points[2]: %e %e %e \n", out_points[2][0], out_points[2][1], out_points[2][2]);	
+		return -1;
+	}
 
+	fprintf(stderr, "Test1 passed the test \n");
 
 	//Constructing test2
 
-	manp_base_point[0] = 0;
-	manp_base_point[1] = 0;
-	manp_base_point[2] = 0;	
+	start_configuration[0][0] = 0;
+	start_configuration[0][1] = 0;
+	start_configuration[0][2] = 0;	
 	
-	manp_angles[0] = PI/2;
-	manp_angles[1] = PI/4;
-	manp_angles[2] = PI/3;
+	start_configuration[1][0] = 2;
+	start_configuration[1][1] = 3;
+	start_configuration[1][2] = 4;	
 	
-	manp_link_lengths[0] = 2;
-	manp_link_lengths[1] = 3;
-	manp_link_lengths[2] = 4;	
+	start_configuration[2][0] = PI/2;
+	start_configuration[2][1] = PI/4;
+	start_configuration[2][2] = PI/3;
 	
-	Manipulator test2( manp_base_point, manp_angles, manp_link_lengths );
+	Manipulator test2( start_configuration );
+
+	test2.getManipulatorPoints( out_points );
 
 	//Testing setManipulator
-	if (fabs(test2.point_zero[0] - 0)  > 1e-6 || fabs(test2.point_zero[1] - 0) > 1e-6 || fabs(test2.point_zero[2] - 0) > 1e-6 )
-		fprintf(stderr, "Test2: Wrong point_zero: %e %e %e \n", test2.point_zero[0], test2.point_zero[1], test2.point_zero[2]);
+	if (fabs(out_points[0][0] - 0)  > 1e-6 || fabs(out_points[0][1] - 0) > 1e-6 || fabs(out_points[0][2] - 0) > 1e-6 ) {
+		fprintf(stderr, "Test2: Wrong points[0]: %e %e %e \n", out_points[0][0], out_points[0][1], out_points[0][2]);
+		return -1;
+	}
 	
-	if (fabs(test2.point_one[0] - 0) > 1e-6 || fabs(test2.point_one[1] - 2.121320343559643) > 1e-6 || fabs(test2.point_one[2] - 2.121320343559643) > 1e-6 )
-		fprintf(stderr, "Test2: Wrong point_one: %e %e %e \n", test2.point_one[0], test2.point_one[1], test2.point_one[2]);
+	if (fabs(out_points[1][0] - 0) > 1e-6 || fabs(out_points[1][1] - 2.121320343559643) > 1e-6 || fabs(out_points[1][2] - 2.121320343559643) > 1e-6 ) {
+		fprintf(stderr, "Test2: Wrong points[1]: %e %e %e \n", out_points[1][0], out_points[1][1], out_points[1][2]);
+		return -1;
+	}
 	
-	if (fabs(test2.point_two[0] - 0)  > 1e-6 || fabs(test2.point_two[1] - 5.585421958697397) > 1e-6 || fabs(test2.point_two[2] - 4.121320343559643) > 1e-6 )
-		fprintf(stderr, "Test2: Wrong point_two: %e %e %e \n", test2.point_two[0], test2.point_two[1], test2.point_two[2]);
-	
-	fprintf(stderr, "FABRIK test2 \n");
-	test2.FABRIK(10, test_dest);
+	if (fabs(out_points[2][0] - 0)  > 1e-6 || fabs(out_points[2][1] - 5.585421958697397) > 1e-6 || fabs(out_points[2][2] - 4.121320343559643) > 1e-6 ) {
+		fprintf(stderr, "Test2: Wrong points[2]: %e %e %e \n", out_points[2][0], out_points[2][1], out_points[2][2]);
+		return -1;
+	}
 
+	fprintf(stderr, "Test2 passed the test \n");
+	
 	//Constructing test3
 
-	manp_base_point[0] = 1;
-	manp_base_point[1] = -1;
-	manp_base_point[2] = 1;	
+	start_configuration[0][0] = 1;
+	start_configuration[0][1] = -1;
+	start_configuration[0][2] = 1;	
 	
-	manp_angles[0] = 2*PI;
-	manp_angles[1] = 0;
-	manp_angles[2] = 5*PI/6;
+	start_configuration[1][0] = 0;
+	start_configuration[1][1] = 1;
+	start_configuration[1][2] = 1;	
 	
-	manp_link_lengths[0] = 0;
-	manp_link_lengths[1] = 1;
-	manp_link_lengths[2] = 1;	
+	start_configuration[2][0] = 2*PI;
+	start_configuration[2][1] = 0;
+	start_configuration[2][2] = 5*PI/6;
 	
-	Manipulator test3( manp_base_point, manp_angles, manp_link_lengths );
+	Manipulator test3( start_configuration );
+
+	test3.getManipulatorPoints( out_points );
 
 	//Testing setManipulator
-	if (fabs(test3.point_zero[0] - 1)  > 1e-6 || fabs(test3.point_zero[1] + 1) > 1e-6 || fabs(test3.point_zero[2] - 1) > 1e-6 )
-		fprintf(stderr, "Test3: Wrong point_zero: %e %e %e \n", test3.point_zero[0], test3.point_zero[1], test3.point_zero[2]);
+	if (fabs(out_points[0][0] - 1)  > 1e-6 || fabs(out_points[0][1] + 1) > 1e-6 || fabs(out_points[0][2] - 1) > 1e-6 ) {
+		fprintf(stderr, "Test3: Wrong points[0]: %e %e %e \n", out_points[0][0], out_points[0][1], out_points[0][2]);
+		return -1;
+	}
 	
-	if (fabs(test3.point_one[0] - 1) > 1e-6 || fabs(test3.point_one[1] + 1) > 1e-6 || fabs(test3.point_one[2] - 2) > 1e-6 )
-		fprintf(stderr, "Test3: Wrong point_one: %e %e %e \n", test3.point_one[0], test3.point_one[1], test3.point_one[2]);
+	if (fabs(out_points[1][0] - 1) > 1e-6 || fabs(out_points[1][1] + 1) > 1e-6 || fabs(out_points[1][2] - 2) > 1e-6 ) {
+		fprintf(stderr, "Test3: Wrong points[1]: %e %e %e \n", out_points[1][0], out_points[1][1], out_points[1][2]);
+		return -1;
+	}
 	
-	if (fabs(test3.point_two[0] - 1.5)  > 1e-6 || fabs(test3.point_two[1] + 1) > 1e-6 || fabs(test3.point_two[2] - 1.1339745962155614) > 1e-6 )
-		fprintf(stderr, "Test3: Wrong point_two: %e %e %e \n", test3.point_two[0], test3.point_two[1], test3.point_two[2]);	
-
-	fprintf(stderr, "FABRIK test3 \n");
-	test3.FABRIK(10, test_dest);
+	if (fabs(out_points[2][0] - 1.5)  > 1e-6 || fabs(out_points[2][1] + 1) > 1e-6 || fabs(out_points[2][2] - 1.1339745962155614) > 1e-6 ) {
+		fprintf(stderr, "Test3: Wrong points[2]: %e %e %e \n", out_points[2][0], out_points[2][1], out_points[2][2]);
+		return -1;
+	}
+	
+	fprintf(stderr, "Test3 passed the test \n");
 
 	return 0;
 }
+
+/*
 
 int getPoint_test() {
 	float l1, link_length = 1;
@@ -541,4 +569,4 @@ int getPoint_test() {
 		fprintf(stderr, "links length error %lf \n", l1);
 	return 0;
 }
-
+*/
