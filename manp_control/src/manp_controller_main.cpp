@@ -46,12 +46,12 @@ class Manipulator {
 		void getManipulatorConfiguration( std::vector<std::vector<float> >& out_configuration );
 		//Working as planned		
 		void updateManipulator();
+		//Working as planned
+		void getRotAngle(std::vector<float> dest, float& rot_angle );
 		//
 		void transform(std::vector<float>& vect, float angle);
 		//
 		//void atransform(std::vector<float>& vect, float angle);
-		//
-		//void getRotAngle(std::vector<float> dest, std::vector<float>& rot_angle );
 		//void FABRIK( int iter, std::vector<float> dest );
 		//bool checkDestination ( std::vector<float> joint_positions );
 		//void controlSynth (std::vector<float> pv_joint_positions, std::vector<float> joint_positions, std::vector<float>& control );
@@ -269,6 +269,35 @@ void Manipulator::updateManipulator() {
 	configuration[2][2] = atan2( k*pow(pow(points[2][0]-points[1][0],2) + pow(points[2][1]-points[1][1],2), 0.5) ,(points[2][2] - points[1][2])) - configuration[2][1];
 }
 
+void Manipulator::getRotAngle(std::vector<float> dest, float& rot_angle) {
+	int k;
+
+	if (points[2][0] == 0 & points[2][1] == 0) {
+		if ( (dest[1] - dest[0]) >= 0 )
+			k = 1;
+		else k = -1;
+		rot_angle = k*acos( dest[0]/ (pow( pow( dest[0], 2) + pow(dest[1],2), 0.5 ) ) );
+	}
+	
+	else
+	{
+		if ( (points[2][0]*dest[1] - points[2][1]*dest[0]) >= 0 )
+			k = 1;
+		else k = -1;
+
+		rot_angle = k*acos( (points[2][0]*dest[0] + points[2][1]*dest[1])/ ( (configuration[1][1]*sin(configuration[2][1]) + configuration[1][2]*sin(configuration[2][2]+configuration[2][1]))*pow( pow(dest[0],2) + pow(dest[1],2), 0.5 )) );
+	}
+
+}
+
+void Manipulator::transform(std::vector<float>& vect, float angle) {
+	double tmp = vect[0]*cos(angle) - vect[1]*sin(angle);
+	vect[1] = vect[0]*sin(angle) + vect[1]*cos(angle);
+        vect[0] = tmp;
+	vect[2] = vect[2];
+}
+
+
 /*
 void getPoint ( float link_length, std::vector<float> stationary, std::vector<float> moving, std::vector<float>& out ) {
 	std::vector<float> vect(2);
@@ -291,31 +320,11 @@ void getPoint ( float link_length, std::vector<float> stationary, std::vector<fl
         }
 }
 
-void Manipulator::transform(std::vector<float>& vect, float angle) {
-	double tmp_v0 = vect[0]*cos(angle) - vect[1]*sin(angle);
-	vect[1] = vect[0]*sin(angle) + vect[1]*cos(angle);
-        vect[0] = tmp_v0;
-	vect[2] = vect[2];
-}
-
-
 void Manipulator::atransform(std::vector<float>& vect, float angle) {
 	double tmp_v0 = vect[0]*cos(angle) + vect[1]*sin(angle);
 	vect[1] = vect[1]*cos(angle) - vect[0]*sin(angle);
         vect[0] = tmp_v0;
 	vect[2] = vect[2];
-}
-
-void Manipulator::getRotAngle(std::vector<float> dest, std::vector<float>& rot_angle) {
-	if (point_two[0] == 0) {
-		rot_angle = acos( dest[1]*point_two[1]/ ( (link_lengths[1]*sin(angles[1]) + link_lengths[2]*sin(angles[2]))*pow( pow( dest[0], 2) + pow(dest[1],2), 0.5 ) ) );	
-	}
-	if (point_two[1] == 0) {
-		rot_angle = acos( dest[0]*point_two[0]/ ( (link_lengths[1]*sin(angles[1]) + link_lengths[2]*sin(angles[2]))*pow( pow( dest[0], 2) + pow(dest[1],2), 0.5 ) ) );	
-	}
-	if (point_two[0] != 0 & point_two[1] != 0) {
-		rot_angle = acos( (point_two[0]*dest[0] + point_two[1]*dest[1])/ ( (link_lengths[1]*sin(angles[1]) + link_lengths[2]*sin(angles[2]))*pow( pow(dest[0],2) + pow(dest[1],2), 0.5 )) );
-	}
 }
 
 void Manipulator::FABRIK( int iter, std::vector<float> dest ) {
@@ -464,7 +473,12 @@ int unitTestsBody() {
 	std::vector<std::vector<float> > out_points(3, std::vector<float> (3));
 	std::vector<std::vector<float> > out_configuration(3, std::vector<float> (3));
 
+	std::vector<float> destination(3);
+	float rot_angle;
+	
+	//------------------
 	//Constructing test1
+	//------------------
 
 	start_configuration[0][0] = 0;
 	start_configuration[0][1] = 0;
@@ -509,10 +523,25 @@ int unitTestsBody() {
 	test1.getManipulatorConfiguration( out_configuration );
 	if( updateManipulator_test(out_configuration, start_configuration) == -1)
 		return -1;
+
+	//Testing getRotAngle
+	
+	destination[0] = 3;
+	destination[1] = 0;
+	destination[2] = 13;
+
+	test1.getRotAngle( destination, rot_angle);
+	
+	if (fabs(rot_angle + PI/2)  > 1e-6 ) {
+		fprintf(stderr, "Wrong rot_angle: %e \n", rot_angle );
+		return -1;
+	}
 	
 	fprintf(stderr, "Test1 passed the test \n");
-
+	
+	//------------------
 	//Constructing test2
+	//------------------
 
 	start_configuration[0][0] = 0;
 	start_configuration[0][1] = 0;
@@ -558,9 +587,24 @@ int unitTestsBody() {
 	if( updateManipulator_test(out_configuration, start_configuration) == -1)
 		return -1;
 
+	//Testing getRotAngle
+	
+	destination[0] = 4;
+	destination[1] = 4;
+	destination[2] = 0;
+
+	test2.getRotAngle( destination, rot_angle);
+	
+	if (fabs(rot_angle + PI/4)  > 1e-6 ) {
+		fprintf(stderr, "Wrong rot_angle: %e \n", rot_angle );
+		return -1;
+	}
+
 	fprintf(stderr, "Test2 passed the test \n");
 	
+	//------------------
 	//Constructing test3
+	//------------------	
 
 	start_configuration[0][0] = 1;
 	start_configuration[0][1] = -1;
@@ -604,7 +648,20 @@ int unitTestsBody() {
 	test3.getManipulatorConfiguration( out_configuration );
 	if( updateManipulator_test(out_configuration, start_configuration) == -1)
 		return -1;
+
+	//Testing getRotAngle
 	
+	destination[0] = 1;
+	destination[1] = 1;
+	destination[2] = 6;
+
+	test3.getRotAngle( destination, rot_angle);
+	
+	if (fabs(rot_angle - PI/4)  > 1e-6 ) {
+		fprintf(stderr, "Wrong rot_angle: %e \n", rot_angle );
+		return -1;
+	}
+
 	fprintf(stderr, "Test3 passed the test \n");
 
 	return 0;
