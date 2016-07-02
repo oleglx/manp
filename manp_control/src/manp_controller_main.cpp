@@ -26,6 +26,7 @@ std::vector<float> joint_positions(3), joint_efforts(3);
 //Unit tests
 int unitTestsBody();
 int getManipulatorConfiguration_test(std::vector<std::vector<float> > out_configuration, std::vector<std::vector<float> > start_configuration);
+int updateManipulator_test (std::vector<std::vector<float> > out_configuration, std::vector<std::vector<float> > start_configuration);
 //int getPoint_test();
 
 
@@ -43,10 +44,10 @@ class Manipulator {
 		void getManipulatorPoints( std::vector<std::vector<float> >& out_points );
 		//Working as planned
 		void getManipulatorConfiguration( std::vector<std::vector<float> >& out_configuration );
-		//		
+		//Working as planned		
 		void updateManipulator();
 		//
-		//void transform(std::vector<float>& vect, float angle);
+		void transform(std::vector<float>& vect, float angle);
 		//
 		//void atransform(std::vector<float>& vect, float angle);
 		//
@@ -223,7 +224,7 @@ void Manipulator::getManipulatorConfiguration( std::vector<std::vector<float> >&
 }
 
 void Manipulator::updateManipulator() {
-	int k;	
+	int k;
 
 	configuration[0] = points[0];
 
@@ -232,18 +233,40 @@ void Manipulator::updateManipulator() {
 		configuration[2][0] = 0;
 	}
 	else {
-		configuration[2][0] = atan2((point[2][1] - points[0][1]),(point[2][0] - points[0][0]));
-	}	
-		
+		configuration[2][0] = atan2((points[2][1] - points[0][1]),(points[2][0] - points[0][0]));
+	}
+	
 	//Setting link1_to_link2 angle
-	if ( (points[1][0] < 0 & points[1][1] > 0) || (points[1][0] < 0 & points[1][1] < 0))
-		k = -1;
-	else k = 1;
 
-	configuration[2][1] = atan2( (point_one[2] - point_zero[2]), );
+	if ( configuration[2][0] > 0 ) {
+
+		if ( (points[1][0] > 0 & points[1][1] < 0) || (points[1][0] < 0 & points[1][1] < 0) || (points[1][0] == 0 & points[1][1] < 0) )
+			k = -1;
+		else k = 1;
+	}
+	else
+	{
+		if ( (points[1][0] > 0 & points[1][1] > 0) || (points[1][0] < 0 & points[1][1] > 0) || (points[1][0] == 0 & points[1][1] > 0) )
+			k = -1;
+		else k = 1;
+	}	
+	configuration[2][1] = atan2( k*pow(pow(points[1][0]-points[0][0],2) + pow(points[1][1]-points[0][1],2), 0.5), (points[1][2] - points[0][2]));
 
 	//Setting link2_to_link3 angle
-	configuration[2][2] = atan2( (point_two[2] - point_one[2]), );
+
+	if ( configuration[2][0] > 0 ) {
+
+		if ( (points[2][0] > 0 & points[2][1] < 0) || (points[2][0] < 0 & points[2][1] < 0) || (points[2][0] == 0 & points[2][1] < 0) )
+			k = -1;
+		else k = 1;
+	}
+	else
+	{
+		if ( (points[2][0] > 0 & points[2][1] > 0) || (points[2][0] < 0 & points[2][1] > 0) || (points[2][0] == 0 & points[2][1] > 0) )
+			k = -1;
+		else k = 1;
+	}
+	configuration[2][2] = atan2( k*pow(pow(points[2][0]-points[1][0],2) + pow(points[2][1]-points[1][1],2), 0.5) ,(points[2][2] - points[1][2])) - configuration[2][1];
 }
 
 /*
@@ -479,6 +502,13 @@ int unitTestsBody() {
 	test1.getManipulatorConfiguration( out_configuration );	
 	if( getManipulatorConfiguration_test(out_configuration, start_configuration) == -1)
 		return -1;
+
+	//Testing updateManipulator
+	
+	test1.updateManipulator();
+	test1.getManipulatorConfiguration( out_configuration );
+	if( updateManipulator_test(out_configuration, start_configuration) == -1)
+		return -1;
 	
 	fprintf(stderr, "Test1 passed the test \n");
 
@@ -522,6 +552,12 @@ int unitTestsBody() {
 	if( getManipulatorConfiguration_test(out_configuration, start_configuration) == -1)
 		return -1;
 
+	//Testing updateManipulator
+	test2.updateManipulator();
+	test2.getManipulatorConfiguration( out_configuration );
+	if( updateManipulator_test(out_configuration, start_configuration) == -1)
+		return -1;
+
 	fprintf(stderr, "Test2 passed the test \n");
 	
 	//Constructing test3
@@ -534,7 +570,7 @@ int unitTestsBody() {
 	start_configuration[1][1] = 1;
 	start_configuration[1][2] = 1;	
 	
-	start_configuration[2][0] = 2*PI;
+	start_configuration[2][0] = 0;
 	start_configuration[2][1] = 0;
 	start_configuration[2][2] = 5*PI/6;
 	
@@ -563,6 +599,12 @@ int unitTestsBody() {
 	if( getManipulatorConfiguration_test(out_configuration, start_configuration) == -1)
 		return -1;
 	
+	//Testing updateManipulator
+	test3.updateManipulator();
+	test3.getManipulatorConfiguration( out_configuration );
+	if( updateManipulator_test(out_configuration, start_configuration) == -1)
+		return -1;
+	
 	fprintf(stderr, "Test3 passed the test \n");
 
 	return 0;
@@ -585,4 +627,22 @@ int getManipulatorConfiguration_test(std::vector<std::vector<float> > out_config
 		return -1;
 	}
 
+}
+
+int updateManipulator_test (std::vector<std::vector<float> > out_configuration, std::vector<std::vector<float> > start_configuration) { 
+
+	if (fabs(out_configuration[2][0] - start_configuration[2][0]) > 1e-6 ) {
+		fprintf(stderr, "Wrong out_configuration[2][0]: %e \n", out_configuration[2][0]);
+		return -1;
+	}
+	
+	if (fabs(out_configuration[2][1] - start_configuration[2][1]) > 1e-6 ) {
+		fprintf(stderr, "Wrong out_configuration[2][1]: %e \n", out_configuration[2][1]);
+		return -1;
+	}	
+
+	if (fabs(out_configuration[2][2] - start_configuration[2][2]) > 1e-6 ) {
+		fprintf(stderr, "Wrong out_configuration[2][2]: %e \n", out_configuration[2][2]);
+		return -1;
+	}
 }
