@@ -22,11 +22,13 @@ std::vector<float> destination(3);
 std::vector<float> joint_positions(3), joint_efforts(3);
 
 //void getPoint ( float link_length, std::vector<float> stationary, std::vector<float> moving, std::vector<float>& out );
+void transformVector(std::vector<float>& vect, float angle);
 
 //Unit tests
 int unitTestsBody();
 int getManipulatorConfiguration_test(std::vector<std::vector<float> > out_configuration, std::vector<std::vector<float> > start_configuration);
 int updateManipulator_test (std::vector<std::vector<float> > out_configuration, std::vector<std::vector<float> > start_configuration);
+int manipulatorLengths_test (std::vector<std::vector<float> > out_points, std::vector<std::vector<float> > out_configuration);
 //int getPoint_test();
 
 
@@ -48,10 +50,10 @@ class Manipulator {
 		void updateManipulator();
 		//Working as planned
 		void getRotAngle(std::vector<float> dest, float& rot_angle );
+		//Working as planned
+		void transformManipulator(float angle);
 		//
-		void transform(std::vector<float>& vect, float angle);
-		//
-		//void atransform(std::vector<float>& vect, float angle);
+		void atransform(std::vector<float>& vect, float angle);
 		//void FABRIK( int iter, std::vector<float> dest );
 		//bool checkDestination ( std::vector<float> joint_positions );
 		//void controlSynth (std::vector<float> pv_joint_positions, std::vector<float> joint_positions, std::vector<float>& control );
@@ -290,12 +292,39 @@ void Manipulator::getRotAngle(std::vector<float> dest, float& rot_angle) {
 
 }
 
-void Manipulator::transform(std::vector<float>& vect, float angle) {
+void Manipulator::transformManipulator(float angle) {
+	
+	double tmp = points[0][0]*cos(angle) - points[0][1]*sin(angle);
+	points[0][1] = points[0][0]*sin(angle) + points[0][1]*cos(angle);
+        points[0][0] = tmp;
+	points[0][2] = points[0][2];
+
+	tmp = points[1][0]*cos(angle) - points[1][1]*sin(angle);
+	points[1][1] = points[1][0]*sin(angle) + points[1][1]*cos(angle);
+        points[1][0] = tmp;
+	points[1][2] = points[1][2];
+
+	tmp = points[2][0]*cos(angle) - points[2][1]*sin(angle);
+	points[2][1] = points[2][0]*sin(angle) + points[2][1]*cos(angle);
+        points[2][0] = tmp;
+	points[2][2] = points[2][2];
+}
+
+void transformVector(std::vector<float>& vect, float angle) {
+
 	double tmp = vect[0]*cos(angle) - vect[1]*sin(angle);
 	vect[1] = vect[0]*sin(angle) + vect[1]*cos(angle);
         vect[0] = tmp;
 	vect[2] = vect[2];
 }
+
+//void Manipulator::atransform(std::vector<float>& vect, float angle) {
+//	double tmp_v0 = vect[0]*cos(angle) + vect[1]*sin(angle);
+//	vect[1] = vect[1]*cos(angle) - vect[0]*sin(angle);
+//       vect[0] = tmp_v0;
+//	vect[2] = vect[2];
+//}
+
 
 
 /*
@@ -318,13 +347,6 @@ void getPoint ( float link_length, std::vector<float> stationary, std::vector<fl
         	out[1] = stationary[1];
         	out[2] = stationary[2];
         }
-}
-
-void Manipulator::atransform(std::vector<float>& vect, float angle) {
-	double tmp_v0 = vect[0]*cos(angle) + vect[1]*sin(angle);
-	vect[1] = vect[1]*cos(angle) - vect[0]*sin(angle);
-        vect[0] = tmp_v0;
-	vect[2] = vect[2];
 }
 
 void Manipulator::FABRIK( int iter, std::vector<float> dest ) {
@@ -536,7 +558,24 @@ int unitTestsBody() {
 		fprintf(stderr, "Wrong rot_angle: %e \n", rot_angle );
 		return -1;
 	}
-	
+
+	//Testing transform
+	test1.transformManipulator(rot_angle);
+	test1.getManipulatorPoints(out_points);
+	if (manipulatorLengths_test( out_points, out_configuration ) == -1) //Testing lengths
+		return -1;
+	transformVector(destination, rot_angle);
+	test1.transformManipulator(rot_angle);
+	test1.getManipulatorPoints(out_points);	
+	if (manipulatorLengths_test( out_points, out_configuration ) == -1) //Testing lengths
+		return -1;	
+
+	if ( (out_points[0][0] != 0 & out_points[1][0] != 0 & out_points[2][0] != 0) & (out_points[0][1] != 0 & out_points[1][1] != 0 & out_points[2][1] != 0) ) {
+		fprintf(stderr, "Wrong rotation. Points x's %e %e %e \n", out_points[0][0], out_points[1][0], out_points[2][0]);
+		fprintf(stderr, "Points y's %e %e %e \n", out_points[0][1], out_points[1][1], out_points[2][1]);
+		return -1;
+	}
+		
 	fprintf(stderr, "Test1 passed the test \n");
 	
 	//------------------
@@ -600,15 +639,32 @@ int unitTestsBody() {
 		return -1;
 	}
 
+	//Testing transform
+	test2.transformManipulator(rot_angle);
+	test2.getManipulatorPoints(out_points);
+	if (manipulatorLengths_test( out_points, out_configuration ) == -1) //Testing lengths
+		return -1;
+	transformVector(destination, rot_angle);
+	test2.transformManipulator(rot_angle);
+	test2.getManipulatorPoints(out_points);	
+	if (manipulatorLengths_test( out_points, out_configuration ) == -1) //Testing lengths
+		return -1;	
+
+	if ( (out_points[0][0] != 0 & out_points[1][0] != 0 & out_points[2][0] != 0) & (out_points[0][1] != 0 & out_points[1][1] != 0 & out_points[2][1] != 0) ) {
+		fprintf(stderr, "Wrong rotation. Points x's %e %e %e \n", out_points[0][0], out_points[1][0], out_points[2][0]);
+		fprintf(stderr, "Points y's %e %e %e \n", out_points[0][1], out_points[1][1], out_points[2][1]);
+		return -1;
+	}
+	
 	fprintf(stderr, "Test2 passed the test \n");
 	
 	//------------------
 	//Constructing test3
 	//------------------	
 
-	start_configuration[0][0] = 1;
-	start_configuration[0][1] = -1;
-	start_configuration[0][2] = 1;	
+	start_configuration[0][0] = 0;
+	start_configuration[0][1] = 0;
+	start_configuration[0][2] = 0;	
 	
 	start_configuration[1][0] = 0;
 	start_configuration[1][1] = 1;
@@ -623,17 +679,17 @@ int unitTestsBody() {
 	test3.getManipulatorPoints( out_points );
 
 	//Testing setManipulator&getManipulatorPoints
-	if (fabs(out_points[0][0] - 1)  > 1e-6 || fabs(out_points[0][1] + 1) > 1e-6 || fabs(out_points[0][2] - 1) > 1e-6 ) {
+	if (fabs(out_points[0][0] - 0)  > 1e-6 || fabs(out_points[0][1] - 0) > 1e-6 || fabs(out_points[0][2] - 0) > 1e-6 ) {
 		fprintf(stderr, "Wrong points[0]: %e %e %e \n", out_points[0][0], out_points[0][1], out_points[0][2]);
 		return -1;
 	}
 	
-	if (fabs(out_points[1][0] - 1) > 1e-6 || fabs(out_points[1][1] + 1) > 1e-6 || fabs(out_points[1][2] - 2) > 1e-6 ) {
+	if (fabs(out_points[1][0] - 0) > 1e-6 || fabs(out_points[1][1] - 0) > 1e-6 || fabs(out_points[1][2] - 1) > 1e-6 ) {
 		fprintf(stderr, "Wrong points[1]: %e %e %e \n", out_points[1][0], out_points[1][1], out_points[1][2]);
 		return -1;
 	}
 	
-	if (fabs(out_points[2][0] - 1.5)  > 1e-6 || fabs(out_points[2][1] + 1) > 1e-6 || fabs(out_points[2][2] - 1.1339745962) > 1e-6 ) {
+	if (fabs(out_points[2][0] - 0.5)  > 1e-6 || fabs(out_points[2][1] - 0) > 1e-6 || fabs(out_points[2][2] - 0.1339745962) > 1e-6 ) {
 		fprintf(stderr, "Wrong points[2]: %e %e %e \n", out_points[2][0], out_points[2][1], out_points[2][2]);
 		return -1;
 	}
@@ -659,6 +715,23 @@ int unitTestsBody() {
 	
 	if (fabs(rot_angle - PI/4)  > 1e-6 ) {
 		fprintf(stderr, "Wrong rot_angle: %e \n", rot_angle );
+		return -1;
+	}
+
+	//Testing transform
+	test3.transformManipulator(rot_angle);
+	test3.getManipulatorPoints(out_points);
+	if (manipulatorLengths_test( out_points, out_configuration ) == -1) //Testing lengths
+		return -1;
+	transformVector(destination, rot_angle);
+	test3.transformManipulator(rot_angle);
+	test3.getManipulatorPoints(out_points);	
+	if (manipulatorLengths_test( out_points, out_configuration ) == -1) //Testing lengths
+		return -1;	
+
+	if ( (out_points[0][0] != 0 & out_points[1][0] != 0 & out_points[2][0] != 0) & (out_points[0][1] != 0 & out_points[1][1] != 0 & out_points[2][1] != 0) ) {
+		fprintf(stderr, "Wrong rotation. Points x's %e %e %e \n", out_points[0][0], out_points[1][0], out_points[2][0]);
+		fprintf(stderr, "Points y's %e %e %e \n", out_points[0][1], out_points[1][1], out_points[2][1]);
 		return -1;
 	}
 
@@ -702,4 +775,15 @@ int updateManipulator_test (std::vector<std::vector<float> > out_configuration, 
 		fprintf(stderr, "Wrong out_configuration[2][2]: %e \n", out_configuration[2][2]);
 		return -1;
 	}
+}
+
+int manipulatorLengths_test (std::vector<std::vector<float> > out_points, std::vector<std::vector<float> > out_configuration) {
+	float l1, l2;
+	
+	l1 = pow( pow( out_points[1][0] - out_points[0][0] ,2) + pow( out_points[1][1] - out_points[0][1] ,2) + pow( out_points[1][2] - out_points[0][2] ,2) , 0.5 );
+	l2 = pow( pow( out_points[2][0] - out_points[1][0] ,2) + pow( out_points[2][1] - out_points[1][1] ,2) + pow( out_points[2][2] - out_points[1][2] ,2) , 0.5 );
+
+	if (fabs(l1 - out_configuration[1][1])>1e-3 || fabs(l2- out_configuration[1][2])>1e-3 )
+		fprintf(stderr, "links length error %e %e \n",l1, l2);
+
 }
