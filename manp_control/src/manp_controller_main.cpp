@@ -21,7 +21,6 @@ std::vector<std::vector<float> > start_configuration(3, std::vector<float> (3));
 std::vector<float> destination(3);
 std::vector<float> joint_positions(3), joint_efforts(3);
 
-//void getPoint ( float link_length, std::vector<float> stationary, std::vector<float> moving, std::vector<float>& out );
 void transformVector(std::vector<float>& vect, float angle);
 
 //Unit tests
@@ -53,7 +52,7 @@ class Manipulator {
 		//Working as planned
 		void transformManipulator(float angle);
 		//
-		void atransform(std::vector<float>& vect, float angle);
+		int getPoint ( float link_length, std::vector<float> stationary, std::vector<float> reference, std::vector<float>& moving );
 		//void FABRIK( int iter, std::vector<float> dest );
 		//bool checkDestination ( std::vector<float> joint_positions );
 		//void controlSynth (std::vector<float> pv_joint_positions, std::vector<float> joint_positions, std::vector<float>& control );
@@ -318,37 +317,38 @@ void transformVector(std::vector<float>& vect, float angle) {
 	vect[2] = vect[2];
 }
 
-//void Manipulator::atransform(std::vector<float>& vect, float angle) {
-//	double tmp_v0 = vect[0]*cos(angle) + vect[1]*sin(angle);
-//	vect[1] = vect[1]*cos(angle) - vect[0]*sin(angle);
-//       vect[0] = tmp_v0;
-//	vect[2] = vect[2];
-//}
 
-
-
-/*
-void getPoint ( float link_length, std::vector<float> stationary, std::vector<float> moving, std::vector<float>& out ) {
+int Manipulator::getPoint ( float link_length, std::vector<float> stationary, std::vector<float> reference, std::vector<float>& moving ) {
 	std::vector<float> vect(2);
+	int i = -1; //Invoking segmentation fault
 
-	vect[0] = moving[1] - stationary[1];
-	vect[1] = moving[2] - stationary[2];
+	if ((points[0][0] == 0 & points[1][0] == 0 & points[2][0] == 0))
+		i = 1;
+	if ((points[0][1] == 0 & points[1][1] == 0 & points[2][1] == 0))
+		i = 0;
+	if (i == -1)
+		return -1;
+
+
+	vect[0] = reference[i] - stationary[i];
+	vect[1] = reference[2] - stationary[2];
 
 	float k = pow(pow(vect[0],2) + pow(vect[1],2), 0.5);
 	if ( k >= 1e-6 ) {
   		vect[0] /= k;
 		vect[1] /= k;
 	
-		out[1] = stationary[1] + link_length*vect[0];
-		out[2] = stationary[2] + link_length*vect[1];
+		moving[i] = stationary[i] + link_length*vect[0];
+		moving[2] = stationary[2] + link_length*vect[1];
         }
 	else
 	{
-        	out[1] = stationary[1];
-        	out[2] = stationary[2];
+        	moving[i] = stationary[i];
+        	moving[2] = stationary[2];
         }
+	return 0;
 }
-
+/*
 void Manipulator::FABRIK( int iter, std::vector<float> dest ) {
 	std::vector<float> zero_pv(3), one_pv(3), two_pv(3);
 	float rot_angle;
