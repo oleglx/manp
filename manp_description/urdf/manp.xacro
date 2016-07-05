@@ -4,12 +4,12 @@
 <!-- Constants -->
 	
 	<xacro:property name="pi" value="3.14159265359"/>
-	<xacro:property name="width" value="0.5"/>
-	<xacro:property name="height" value="4"/>
-	<xacro:property name="base_h" value="0.5"/>
-	<xacro:property name="base_r" value="1"/>
-	<xacro:property name="base_link_mass" value="20"/>
-	<xacro:property name="link_mass" value="40"/>
+	<xacro:property name="width" value="0.05"/>
+	<xacro:property name="height" value="0.4"/>
+	<xacro:property name="base_h" value="0.05"/>
+	<xacro:property name="base_r" value="0.1"/>
+	<xacro:property name="base_link_mass" value="2"/>
+	<xacro:property name="link_mass" value="4"/>
 
 <!-- Links -->
 
@@ -96,17 +96,18 @@
 			</geometry>
 			<origin xyz="0 0 ${height/2}"/>
 		</collision>
-	</link>
+	</link> 
 
 <!-- ########### -->
 
 <!-- Joints -->
 	
-	<joint name="world_to_base" type="fixed">
+	<joint name="world_to_base" type="continuous">
 		<parent link="world"/>
 		<child link="base_link"/>
 		<origin xyz="0 0 0"/>
-		<!-- <axis xyz="0 0 1"/>-->
+		<axis xyz="0 0 1"/>
+		<limit lower="${-pi/2}" upper="${pi/2}" effort="10000" velocity="1"/>
 	</joint>
 	
 	<joint name="base_to_link1" type="fixed">
@@ -115,26 +116,27 @@
 		<origin xyz="0 0 ${base_h}"/>
 	</joint>
 
-	<joint name="link1_to_link2" type="continuous">
+	<joint name="link1_to_link2" type="revolute">
 		<parent link="link1"/>
 		<child link="link2"/>
-		<origin xyz="0 ${-width} ${height/2-0.5}" rpy="0 0 0"/>
+		<origin xyz="0 ${-width} ${height/2}" rpy="0 0 0"/>
 		<axis xyz="0 1 0"/>
-		<!-- <limit lower="0" upper="${pi}" effort="10000" velocity="1"/> -->
+		<limit lower="${-pi/2}" upper="${pi/2}" effort="10000" velocity="1"/>
 	</joint>
 	
-	<joint name="link2_to_link3" type="continuous">
+	<joint name="link2_to_link3" type="revolute">
 		<parent link="link2"/>
 		<child link="link3"/>
-		<origin xyz="0 ${width} ${height-0.5}" rpy="0 1 0"/>
+		<origin xyz="0 ${width} ${height}" rpy="0 1 0"/>
 		<axis xyz="0 1 0"/>
-	</joint>
+		<limit lower="${-pi/2}" upper="${pi/2}" effort="10000" velocity="1"/>
+	</joint> 
 
 <!-- ###### -->
 
 <!-- Transmissions -->
 
-	<!--<transmission name="world_to_base">
+	<transmission name="world_to_base">
 		<type>transmission_interface/SimpleTransmission</type>
     		<joint name="world_to_base">
       			<hardwareInterface>EffortJointInterface</hardwareInterface>
@@ -143,7 +145,7 @@
       			<mechanicalReduction>1</mechanicalReduction>
       			<hardwareInterface>EffortJointInterface</hardwareInterface>
     		</actuator>
-  	</transmission> -->
+  	</transmission>
 
 	<transmission name="link1_to_link2">
 		<type>transmission_interface/SimpleTransmission</type>
@@ -165,27 +167,30 @@
       			<mechanicalReduction>1</mechanicalReduction>
       			<hardwareInterface>EffortJointInterface</hardwareInterface>
     		</actuator>
-  	</transmission>
+  	</transmission>  
 
 <!-- ############# -->
 
 <!-- Setting self collide for every link -->
 
 	<gazebo reference="base_link">
+		<gravity>0</gravity>
     		<selfCollide>true</selfCollide>
 	</gazebo>
 
 	<gazebo reference="link1">
+		<gravity>0</gravity>
     		<selfCollide>true</selfCollide>
 	</gazebo>
 	
 	<gazebo reference="link2">
+		<gravity>0</gravity>
     		<selfCollide>true</selfCollide>
 	</gazebo>
 
 	<gazebo reference="link3">
     		<selfCollide>true</selfCollide>
-	</gazebo>
+	</gazebo> 
 
 <!-- ################################# -->
 
