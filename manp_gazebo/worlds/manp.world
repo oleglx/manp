@@ -8,11 +8,12 @@
 			<uri>model://sun</uri>
 		</include>
 		<physics type="ode">
-			<max_step_size>0.00001</max_step_size>
+			<max_step_size>0.0001</max_step_size>
+			<gravity> 0 0 0.000001 </gravity>
 		</physics>
 		<gui>
 			<camera name="user_camera">
-				<pose>-20 0 5 0 0 0</pose>
+				<pose>-5 0 1 0 0 0</pose>
 			</camera>
 		</gui>
 	</world>
