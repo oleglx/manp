@@ -8,7 +8,7 @@
 			<uri>model://sun</uri>
 		</include>
 		<physics type="ode">
-			<max_step_size>0.0001</max_step_size>
+			<max_step_size>0.01</max_step_size>
 			<gravity> 0 0 0.000001 </gravity>
 		</physics>
 		<gui>

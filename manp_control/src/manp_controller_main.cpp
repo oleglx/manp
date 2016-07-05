@@ -123,7 +123,7 @@ int main( int argc, char **argv ) {
 	unitTestsBody();
 	//getPoint_test();
 
-	f = fopen("/home/pal/catkin_ws/logfile", "wt");
+	f = fopen("/home/pal/catkin_ws/logfile.csv", "wt");
 	if (f == 0) {
 		fprintf(stderr, "File not found \n");
 	}
@@ -427,16 +427,28 @@ bool Manipulator::checkDestination ( std::vector<float> joint_positions  ) {
 }
 
 void Manipulator::controlSynth (std::vector<float> pv_joint_positions, std::vector<float> joint_positions, std::vector<float>& control ) {
-	float p = 10;
-	std::vector<std::vector<float> > out_configuration(3, std::vector<float>(3)); 
-	control[0] = p*(configuration[2][0] - joint_positions[0]);
-	control[1] = p*(configuration[2][1] - joint_positions[1]);
-	control[2] = p*(configuration[2][2] - joint_positions[2]-joint_positions[1]);
+	std::vector<std::vector<float> > pid(3, std::vector<float>(3));
+	std::vector<std::vector<float> > out_configuration(3, std::vector<float>(3));
+
+	pid[0][0] = 0.1;
+	pid[0][1] = 0.2;
+	pid[0][2] = 0.3;
+	
+	pid[1][0] = 0;
+	pid[1][1] = 0;
+	pid[1][2] = 0;
+
+	pid[2][0] = 0;
+	pid[2][1] = 0;
+	pid[2][2] = 0;
+ 
+	control[0] = pid[0][0]*(configuration[2][0] - joint_positions[0]) + pid[0][1]*(2*configuration[2][0] - pv_joint_positions[0] - joint_positions[0]) + pid[0][2]*(joint_positions[0] - pv_joint_positions[0]);
+	control[1] = pid[1][0]*(configuration[2][1] - joint_positions[1]) + pid[1][1]*(2*configuration[2][1] - pv_joint_positions[1] - joint_positions[1]) + pid[1][2]*(joint_positions[1] - pv_joint_positions[1]);
+	control[2] = pid[2][0]*(configuration[2][2] - joint_positions[2] - joint_positions[1]);
 
 	getManipulatorConfiguration( out_configuration );
 
-	fprintf(f,"%lf;%lf;%lf;", out_configuration[2][0], out_configuration[2][1], out_configuration[2][2]);
-	fprintf(f,"%lf;%lf;%lf\n", joint_positions[0], joint_positions[1], joint_positions[2]);
+	fprintf(f,"%lf;%lf;%lf;%lf;%lf;%lf\n", out_configuration[2][0], joint_positions[0], out_configuration[2][1], joint_positions[1], out_configuration[2][2], joint_positions[2]);
 }
 
 //----------------------------------------------------------
