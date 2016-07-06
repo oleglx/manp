@@ -11,7 +11,7 @@ using std::vector;
 void getVector (Point2f stationary, Point2f moving, Point2f& vect);
 void normalVector (Point2f& vect);
 void getPoint ( float link_length, Point2f stationary, Point2f moving, Point2f& out );
-void printImg(char* graph_window, Mat graph_image, Point2f zero, Point2f one, Point2f two );
+void printImg(char* graph_window, Mat graph_image, Point2f zero, Point2f one, Point2f two, Point2f pv_zero, Point2f pv_one, Point2f pv_two, Point2f base, Point2f dest );
 
 char graph_window[] = "Graph FABRIK";
 Mat graph_image = Mat(Size(w,w),CV_8UC3,Scalar(255,255,255));
@@ -76,23 +76,25 @@ class Manipulator {
 				one_pv = one;			
 				two_pv = two;
 
+				printImg(graph_window, graph_image, zero, one, two, zero_pv, one_pv, two_pv, zero_pv, dest );
+
 				//Moved point TWO to destination
 				two = dest;
 
 				//Prinring this step
-				printImg(graph_window, graph_image, zero, one, two );
+				printImg(graph_window, graph_image, zero, one, two, zero_pv, one_pv, two_pv, zero_pv, dest );
 			
 				//Moved point ONE for the reverse pass
 				getPoint( link_lengths[1], two, one_pv, one );
 				
 				//Prinring this step
-				printImg(graph_window, graph_image, zero, one, two );
+				printImg(graph_window, graph_image, zero, one, two, zero_pv, one_pv, two_pv, zero_pv, dest );
 				
 				//Moved point ZERO for the reverse pass
 				getPoint( link_lengths[0], one, zero_pv, zero);
 				
 				//Printing this step
-				printImg(graph_window, graph_image, zero, one, two );
+				printImg(graph_window, graph_image, zero, one, two, zero_pv, one_pv, two_pv, zero_pv, dest );
 						
 			//Starting direct pass
 				one_pv = one;			
@@ -102,19 +104,19 @@ class Manipulator {
 				zero = zero_pv;
 
 				//Prinring this step
-				printImg(graph_window, graph_image, zero, one, two );
+				printImg(graph_window, graph_image, zero, one, two, zero_pv, one_pv, two_pv, zero_pv, dest );
 				
 				//Moved point one for the direct pass
 				getPoint( link_lengths[0], zero, one_pv, one );
 				
 				//Prinring this step
-				printImg(graph_window, graph_image, zero, one, two );
+				printImg(graph_window, graph_image, zero, one, two, zero_pv, one_pv, two_pv, zero_pv, dest );
 				
 				//Moved point two for the direct pass
 				getPoint( link_lengths[1], one, two_pv, two );
 				
 				//Prinring this step
-				printImg(graph_window, graph_image, zero, one, two );
+				printImg(graph_window, graph_image, zero, one, two, zero_pv, one_pv, two_pv, zero_pv, dest );
 			}
 
 		}
@@ -155,8 +157,8 @@ int main( void ) {
 	manp_1.getPoints(zero, one, two);
 
 	Point2f dest;
-	dest.x = 564;
-	dest.y = 529;
+	dest.x = 708;
+	dest.y = 514;
 
 	manp_1.FABRIK(  8, zero, one, two, dest );
 
@@ -193,9 +195,19 @@ void getPoint ( float link_length, Point2f stationary, Point2f moving, Point2f& 
 
 }
 
-void printImg(char* graph_window, Mat graph_image, Point2f zero, Point2f one, Point2f two ) {
+void printImg(char* graph_window, Mat graph_image, Point2f zero, Point2f one, Point2f two, Point2f pv_zero, Point2f pv_one, Point2f pv_two, Point2f base, Point2f dest ) {
 	
 	graph_image.setTo(Scalar(255,255,255));
+
+	circle( graph_image, base, w/230, Scalar( 0, 255, 0 ), 2, 8 );
+	circle( graph_image, dest, w/230, Scalar( 0, 255, 0 ), 2, 8 );
+
+	line( graph_image, pv_zero, pv_one, Scalar( 80, 80, 80 ), 1, 8 );
+	line( graph_image, pv_one, pv_two, Scalar( 80, 80, 80 ), 1, 8 );
+
+	circle( graph_image, pv_zero, w/210, Scalar( 100, 100, 100 ), -1, 8 );
+	circle( graph_image, pv_one, w/210, Scalar( 100, 100, 100 ), -1, 8 );
+	circle( graph_image, pv_two, w/210, Scalar( 100, 100, 100 ), -1, 8 );
 
 	line( graph_image, zero, one, Scalar( 0, 0, 0 ), 2, 8 );
 	line( graph_image, one, two, Scalar( 0, 0, 0 ), 2, 8 );
